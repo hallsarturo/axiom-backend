@@ -1,0 +1,108 @@
+::ffff:127.0.0.1 - - [03/Jun/2025:16:50:14 +0000] "GET / HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:140.0) Gecko/20100101 Firefox/140.0"
+::ffff:127.0.0.1 - - [03/Jun/2025:16:50:16 +0000] "GET / HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:140.0) Gecko/20100101 Firefox/140.0"
+::ffff:127.0.0.1 - - [03/Jun/2025:16:50:17 +0000] "GET / HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:140.0) Gecko/20100101 Firefox/140.0"
+::ffff:127.0.0.1 - - [03/Jun/2025:16:50:18 +0000] "GET / HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:140.0) Gecko/20100101 Firefox/140.0"
+::ffff:127.0.0.1 - - [03/Jun/2025:16:50:18 +0000] "GET / HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:140.0) Gecko/20100101 Firefox/140.0"
+::ffff:127.0.0.1 - - [03/Jun/2025:16:50:19 +0000] "GET / HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:140.0) Gecko/20100101 Firefox/140.0"
+::ffff:127.0.0.1 - - [03/Jun/2025:16:50:19 +0000] "GET / HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:140.0) Gecko/20100101 Firefox/140.0"
+::ffff:127.0.0.1 - - [03/Jun/2025:16:51:19 +0000] "GET / HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:140.0) Gecko/20100101 Firefox/140.0"
+::ffff:127.0.0.1 - - [03/Jun/2025:16:51:54 +0000] "GET / HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:140.0) Gecko/20100101 Firefox/140.0"
+::ffff:127.0.0.1 - - [03/Jun/2025:16:51:59 +0000] "GET / HTTP/1.1" 304 - "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:140.0) Gecko/20100101 Firefox/140.0"
+GET / 304 - - 3.501 ms
+GET / 304 - - 0.441 ms
+GET / 200 11 - 1.209 ms
+GET /favicon.ico 404 150 - 0.667 ms
+GET / 304 - - 0.477 ms
+GET / 304 - - 0.717 ms
+GET / 304 - - 1.302 ms
+GET / 200 11 - 1.941 ms
+GET /favicon.ico 404 150 - 1.168 ms
+GET / 304 - - 0.663 ms
+GET / 304 - - 0.546 ms
+GET / 304 - - 2.934 ms
+GET / 200 11 - 2.675 ms
+GET /favicon.ico 404 150 - 1.284 ms
+GET / 200 11 - 0.299 ms
+GET /favicon.ico 404 150 - 0.447 ms
+GET / 304 - - 1.145 ms
+GET / 304 - - 0.613 ms
+GET / 304 - - 0.861 ms
+GET / 200 11 - 0.643 ms
+GET / 304 - - 0.349 ms
+GET / 200 11 - 0.311 ms
+GET / 200 11 - 0.244 ms
+GET / 200 11 - 0.963 ms
+GET / 200 11 - 0.645 ms
+GET / 200 11 - 0.705 ms
+GET / 200 11 - 0.229 ms
+GET / 200 11 - 0.214 ms
+GET / 200 11 - 0.331 ms
+GET / 304 - - 1.012 ms
+GET / 304 - - 1.559 ms
+GET /user 200 19 - 3.991 ms
+GET /user 200 19 - 1.208 ms
+GET / 200 11 - 0.347 ms
+GET /user 200 19 - 0.307 ms
+GET /user 304 - - 1.256 ms
+GET /user 304 - - 1.415 ms
+POST /login 500 1267 - 2.757 ms
+POST /login 500 1267 - 2.467 ms
+POST /login 200 44 - 10.735 ms
+POST /login 200 44 - 8.348 ms
+GET /user 304 - - 1.953 ms
+POST /login 403 14 - 11.403 ms
+POST /login 200 44 - 2.419 ms
+GET /user 304 - - 3.527 ms
+GET /favicon.ico 403 14 - 0.639 ms
+GET /user 403 14 - 0.378 ms
+GET /user 304 - - 1.420 ms
+GET /user 304 - - 2.661 ms
+GET /user 304 - - 1.770 ms
+GET /user 403 14 - 3.084 ms
+GET / 304 - - 0.957 ms
+GET /user 403 14 - 0.635 ms
+GET / 200 10 - 2.326 ms
+GET / 304 - - 6.297 ms
+GET /login 404 144 - 4.054 ms
+POST /login 200 44 - 17.058 ms
+GET /login 404 144 - 6.197 ms
+GET /login 404 144 - 0.640 ms
+GET /login 404 144 - 0.460 ms
+GET /login 404 144 - 3.216 ms
+GET / 304 - - 1.816 ms
+GET / 304 - - 1.077 ms
+GET / 304 - - 0.688 ms
+GET /login 404 144 - 2.985 ms
+GET /user 403 14 - 0.440 ms
+POST /login 500 346 - 28.828 ms
+POST /login 500 20 - 18.572 ms
+POST /login 500 20 - 15.101 ms
+POST /login 500 20 - 19.128 ms
+POST /login 500 20 - 33.342 ms
+POST /login 500 20 - 29.281 ms
+POST /login 200 16 - 20.488 ms
+POST /login 401 14 - 4.241 ms
+POST /login 200 16 - 4.256 ms
+POST /login 200 17 - 20.327 ms
+POST /login 404 145 - 10.799 ms
+POST /login 404 145 - 8.996 ms
+POST /login 404 145 - 2.286 ms
+POST /login 404 145 - 0.735 ms
+POST /login 404 145 - 0.532 ms
+POST /login 404 145 - 0.663 ms
+POST /login 404 145 - 1.583 ms
+POST /login 404 145 - 11.325 ms
+POST /login 404 145 - 1.934 ms
+POST /login 404 145 - 9.398 ms
+POST /login 404 145 - 1.698 ms
+POST /login 404 145 - 0.630 ms
+POST /login 404 145 - 1.024 ms
+POST /login 404 145 - 1.006 ms
+POST /login 404 145 - 0.629 ms
+POST /login 404 145 - 0.443 ms
+GET / 200 10 - 1.610 ms
+POST /login 404 145 - 9.661 ms
+POST /login 500 1246 - 10.586 ms
+POST /login 500 933 - 255.425 ms
+POST /login 500 749 - 261.815 ms
+POST /login 200 17 - 272.114 ms
