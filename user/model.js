@@ -27,7 +27,7 @@ const Users = sequelize.define(
         },
         username: {
             type: DataTypes.STRING(255),
-            allowNUll: false,
+            allowNull: false,
             unique: true,
         },
         password: {
@@ -40,12 +40,23 @@ const Users = sequelize.define(
     }
 );
 
-export async function get(query = {}) {
-    const user = await Users.findOne({ where: { username: query.username } });
-    if (!user) return null;
-
-    const match = await bcrypt.compare(query.password, user.password);
-    if (!match) return null;
-
-    return user;
+export async function get(username, password, cb) {
+    try {
+        const user = await Users.findOne({
+            where: { username },
+        });
+        if (!user) {
+            return cb(null, false, { message: 'No username found' });
+        }
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) {
+            return cb(null, false, {
+                message: 'Incorrect username or password',
+            });
+        } else {
+            return cb(null, user);
+        }
+    } catch (err) {
+        return cb(err);
+    }
 }

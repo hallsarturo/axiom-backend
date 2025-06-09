@@ -1,3 +1,4 @@
+import dotenv from 'dotenv';
 import express from 'express';
 import morgan from 'morgan';
 import session from 'express-session';
@@ -6,9 +7,11 @@ import path from 'path';
 import http from 'http';
 import https from 'https';
 import http2 from 'http2';
+import cors from 'cors';
 import { router as userRouter } from './user/index.js';
 import { router as loginRouter } from './auth/auth.js';
 
+dotenv.config();
 const app = express();
 const port = 3000;
 const securePort = 3010;
@@ -33,13 +36,22 @@ function requireHTTPS(req, res, next) {
 }
 app.use(requireHTTPS);
 //Express-session
-app.use(session({
-    secret: 'secret',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {secure: true}
-}))
-//
+app.use(
+    session({
+        secret: 'secret',
+        resave: false,
+        saveUninitialized: false,
+        cookie: { secure: true },
+    })
+);
+// CORS
+app.use(
+    cors({
+        origin: 'https://localhost:5173',
+        credentials: true,
+    })
+);
+// end Middleware
 
 // ROUTES
 app.get('/', (req, resp) => {
