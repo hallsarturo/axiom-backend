@@ -8,6 +8,7 @@ import http from 'http';
 import https from 'https';
 import http2 from 'http2';
 import cors from 'cors';
+import passport from 'passport';
 import { router as userRouter } from './user/index.js';
 import { router as loginRouter } from './auth/auth.js';
 
@@ -49,6 +50,8 @@ app.use(
     cors({
         origin: 'https://localhost:5173',
         credentials: true,
+        methods: ['GET', 'POST'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
     })
 );
 // end Middleware
@@ -59,6 +62,13 @@ app.get('/', (req, resp) => {
 });
 app.use('/login', loginRouter);
 app.get('/user', userRouter);
+app.get(
+    '/profile',
+    passport.authenticate('jwt', { session: false }),
+    (req, res) => {
+        res.json({ user: req.user });
+    }
+);
 //
 
 // Load SSL Certificates

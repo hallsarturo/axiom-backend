@@ -1,58 +1,51 @@
 import dotenv from 'dotenv';
 import { Router } from 'express';
+import jwt from 'jsonwebtoken';
 import passport from 'passport';
-import LocalStrategy from 'passport-local';
-import { get } from '../user/model.js';
+import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
+import { findUserByUsername } from '../user/model.js';
 
 const router = Router();
 
+// Configuring Passport-JWT
+let opts = {};
+opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+opts.secretOrKey = 'secret';
+// opts.issuer = 'accoaccounts.examplesoft.com';
+// opts.audience = 'yoursite.net';
+
+router.post('/', async (req, res) => {
+    const { username, password } = req.body;
+    const user = await findUserByUsername(username, password);
+
+    if (user === 0) {
+        return res.status(401).json({ message: 'no username found' });
+    } else if (user === 2) {
+        return res
+            .status(401)
+            .json({ message: 'incorrect username or password' });
+    } else {
+        const token = jwt.sign(
+            {
+                id: user.id,
+                username: user.username,
+            },
+            'secret',
+            { expiresIn: '1h' }
+        );
+        console.log('Token: ', token);
+        res.json({ token });
+    }
+});
+
 passport.use(
-    new LocalStrategy(function verify(username, password, done) {
-        get(username, password, (err, user, info) => {
-            if (err) {
-                return done(err);
-            }
-            if (!user) {
-                return done(null, false, info); // info can be a message object
-            }
-            return done(null, user);
-        });
+    new JwtStrategy(opts, async function (jwt_payload, done) {
+        const user = await findUserById(payload.id);
+        if (!user) return done(null, false);
+        return done(null, user);
     })
 );
 
-passport.serializeUser(function (user, cb) {
-    process.nextTick(function () {
-        return cb(null, {
-            id: user.id,
-            username: user.username,
-        });
-    });
-});
 
-passport.deserializeUser(function (user, cb) {
-    process.nextTick(function () {
-        return cb(null, user);
-    });
-});
-
-router.use(passport.initialize());
-router.post('/', (req, res, next) => {
-    passport.authenticate('local', (err, user, info) => {
-        if (err) {
-            return next(err);
-        }
-        if (!user) {
-            return res
-                .status(401)
-                .json({ message: info?.message || 'Unauthorized' });
-        }
-        req.logIn(user, (err) => {
-            if (err) {
-                return next(err);
-            }
-            return res.status(200).json({ success: true });
-        });
-    })(req, res, next);
-});
 
 export { router };

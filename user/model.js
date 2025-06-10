@@ -40,23 +40,56 @@ const Users = sequelize.define(
     }
 );
 
-export async function get(username, password, cb) {
+// export async function get(username, password, cb) {
+//     try {
+//         const user = await Users.findOne({
+//             where: { username },
+//         });
+//         if (!user) {
+//             return cb(null, false, { message: 'No username found' });
+//         }
+//         const match = await bcrypt.compare(password, user.password);
+//         if (!match) {
+//             return cb(null, false, {
+//                 message: 'Incorrect username or password',
+//             });
+//         } else {
+//             return cb(null, user);
+//         }
+//     } catch (err) {
+//         return cb(err);
+//     }
+// }
+
+export async function findUserByUsername(username, password) {
     try {
         const user = await Users.findOne({
             where: { username },
         });
         if (!user) {
-            return cb(null, false, { message: 'No username found' });
+            console.log('no username found');
+            return 0;
         }
         const match = await bcrypt.compare(password, user.password);
         if (!match) {
-            return cb(null, false, {
-                message: 'Incorrect username or password',
-            });
+            console.log('incorrect username or password');
+            return 2;
         } else {
-            return cb(null, user);
+            return user;
         }
     } catch (err) {
-        return cb(err);
+        return err;
+    }
+}
+
+export async function findUserById(id) {
+    try {
+        const user = await Users.findByPk(id);
+        if (!user) {
+            return null;
+        }
+        return user;
+    } catch (err) {
+        console.error(err);
     }
 }
