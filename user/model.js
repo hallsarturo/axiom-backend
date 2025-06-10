@@ -93,3 +93,16 @@ export async function findUserById(id) {
         console.error(err);
     }
 }
+
+export async function createUser(username, password) {
+    try {
+        const hashedPassword = await bcrypt.hash(password, 12);
+        const user = await Users.create({
+            username: username,
+            password: hashedPassword,
+        });
+        return user;
+    } catch (err) {
+        return err;
+    }
+}

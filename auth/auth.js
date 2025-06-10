@@ -3,7 +3,7 @@ import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
-import { findUserByUsername } from '../user/model.js';
+import { createUser, findUserByUsername, findUserById } from '../user/model.js';
 
 const router = Router();
 
@@ -19,7 +19,18 @@ router.post('/', async (req, res) => {
     const user = await findUserByUsername(username, password);
 
     if (user === 0) {
-        return res.status(401).json({ message: 'no username found' });
+        // Create new user
+        const newUser = await createUser(username, password);
+        const token = jwt.sign(
+            {
+                id: newUser.id,
+                username: newUser.username,
+            },
+            'secret',
+            { expiresIn: '1h' }
+        );
+        console.log('Token: ', token)
+        return res.json({ token });
     } else if (user === 2) {
         return res
             .status(401)
@@ -40,12 +51,10 @@ router.post('/', async (req, res) => {
 
 passport.use(
     new JwtStrategy(opts, async function (jwt_payload, done) {
-        const user = await findUserById(payload.id);
+        const user = await findUserById(jwt_payload.id);
         if (!user) return done(null, false);
         return done(null, user);
     })
 );
-
-
 
 export { router };
