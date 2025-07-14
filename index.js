@@ -16,7 +16,7 @@ dotenv.config();
 const app = express();
 const port = 4000;
 const securePort = 4010;
-const _log_dirname = '/Users/proal-mac/Code/node/philo-net-1/';
+const _log_dirname = '/Users/proal-mac/Code/node/axiom-backend/'; 
 
 // MIDDLEWARE
 // Logging:
@@ -24,7 +24,7 @@ const accessLogStream = fs.createWriteStream(
     path.join(_log_dirname, 'access.log'),
     { flags: 'a' }
 );
-app.use(morgan('tiny', { stream: accessLogStream }));
+app.use(morgan('combined', { stream: accessLogStream }));
 // JSON Parse
 app.use(express.json());
 //
@@ -48,7 +48,7 @@ app.use(
 // CORS
 app.use(
     cors({
-        origin: 'https://localhost:5173',
+        origin: 'https://localhost:3000',
         credentials: true,
         methods: ['GET', 'POST'],
         allowedHeaders: ['Content-Type', 'Authorization'],
