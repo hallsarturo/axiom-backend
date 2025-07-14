@@ -1,4 +1,3 @@
-import dotenv from 'dotenv';
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
@@ -20,21 +19,23 @@ router.post('/', async (req, res) => {
 
     if (user === 0) {
         // Create new user
-        const newUser = await createUser(username, password);
-        const token = jwt.sign(
-            {
-                id: newUser.id,
-                username: newUser.username,
-            },
-            'secret',
-            { expiresIn: '1h' }
-        );
-        console.log('Token: ', token)
-        return res.json({ token });
+
+        // const newUser = await createUser(username, password);
+        // const token = jwt.sign(
+        //     {
+        //         id: newUser.id,
+        //         username: newUser.username,
+        //     },
+        //     'secret',
+        //     { expiresIn: '1h' }
+        // );
+        // console.log('Token: ', token);
+        // return res.json({ token });
+
+        // No user found. Redirect to Signup
+        return res.status(401).json({ message: `no username '${username}' found.` });
     } else if (user === 2) {
-        return res
-            .status(401)
-            .json({ message: 'incorrect username or password' });
+        return res.status(401).json({ message: 'incorrect password' });
     } else {
         const token = jwt.sign(
             {

@@ -48,27 +48,6 @@ const Users = sequelize.define(
     }
 );
 
-// export async function get(username, password, cb) {
-//     try {
-//         const user = await Users.findOne({
-//             where: { username },
-//         });
-//         if (!user) {
-//             return cb(null, false, { message: 'No username found' });
-//         }
-//         const match = await bcrypt.compare(password, user.password);
-//         if (!match) {
-//             return cb(null, false, {
-//                 message: 'Incorrect username or password',
-//             });
-//         } else {
-//             return cb(null, user);
-//         }
-//     } catch (err) {
-//         return cb(err);
-//     }
-// }
-
 export async function findUserByUsername(username, password) {
     try {
         const user = await Users.findOne({

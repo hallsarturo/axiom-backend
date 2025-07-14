@@ -16,7 +16,7 @@ dotenv.config();
 const app = express();
 const port = 4000;
 const securePort = 4010;
-const _log_dirname = '/Users/proal-mac/Code/node/axiom-backend/'; 
+const _log_dirname = '/Users/proal-mac/Code/node/axiom-backend/';
 
 // MIDDLEWARE
 // Logging:
@@ -48,7 +48,7 @@ app.use(
 // CORS
 app.use(
     cors({
-        origin: 'https://localhost:3000',
+        origin: process.env.FRONTEND_URL,
         credentials: true,
         methods: ['GET', 'POST'],
         allowedHeaders: ['Content-Type', 'Authorization'],
@@ -87,7 +87,7 @@ const options = {
 };
 //
 
-// Create HTTP/2 server
+// Create HTTP/ server
 const httpServer = http.createServer(app);
 const httpsServer = https.createServer(options, app);
 httpServer.on('error', (err) => console.error(err));
