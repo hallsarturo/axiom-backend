@@ -1,10 +1,18 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { Sequelize, DataTypes } from 'sequelize';
 import bcrypt from 'bcrypt';
 
-const sequelize = new Sequelize('philo-net-db', 'postgres', 'topSecret', {
-    host: 'localhost',
-    dialect: 'postgres',
-});
+const sequelize = new Sequelize(
+    process.env.DB_NAME,
+    process.env.DB_USER,
+    process.env.DB_PASS,
+    {
+        host: 'localhost',
+        dialect: 'postgres',
+    }
+);
 
 // Test db connection
 

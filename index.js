@@ -14,8 +14,8 @@ import { router as loginRouter } from './auth/auth.js';
 
 dotenv.config();
 const app = express();
-const port = 3000;
-const securePort = 3010;
+const port = 4000;
+const securePort = 4010;
 const _log_dirname = '/Users/proal-mac/Code/node/philo-net-1/';
 
 // MIDDLEWARE
