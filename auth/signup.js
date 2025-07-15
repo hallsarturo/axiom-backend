@@ -8,6 +8,7 @@ import {
     findUserById,
     validateUniqueFields,
 } from '../user/model.js';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
 
@@ -17,7 +18,13 @@ opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 opts.secretOrKey = 'secret';
 // PRO: Review security
 
-router.post('/', async (req, res) => {
+const signupLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // Limit each IP to 5 requests per windowMs
+    message: { error: 'Too many signup attempts, please try again later.' },
+});
+
+router.post('/', signupLimiter, async (req, res) => {
     try {
         const userData = req.body;
         console.log('userData: ', userData);
