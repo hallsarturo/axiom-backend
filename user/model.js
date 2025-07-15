@@ -3,6 +3,7 @@ dotenv.config();
 
 import { Sequelize, DataTypes } from 'sequelize';
 import bcrypt from 'bcrypt';
+import parsePhoneNumber from 'libphonenumber-js';
 
 const sequelize = new Sequelize(
     process.env.DB_NAME,
@@ -34,13 +35,52 @@ const Users = sequelize.define(
             primaryKey: true,
         },
         username: {
-            type: DataTypes.STRING(255),
+            type: DataTypes.STRING(50),
             allowNull: false,
             unique: true,
+            validate: {
+                len: {
+                    args: [6, 50],
+                    msg: 'Username must be between 6 and 50 characters',
+                },
+                isLowercase(value) {
+                    if (value !== value.toLowerCase()) {
+                        throw new Error('Username must be lowercase');
+                    }
+                },
+            },
+        },
+        email: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true,
+            validate: {
+                isEmail: {
+                    msg: 'Invalid email address',
+                },
+            },
+        },
+        mobilePhone: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            validate: {
+                async isValidPhone(value) {
+                    const phone = parsePhoneNumber(value);
+                    if (!phone?.isValid()) {
+                        throw new Error('Invalid phone number');
+                    }
+                },
+            },
         },
         password: {
             type: DataTypes.STRING(255),
             allowNull: false,
+            validate: {
+                len: {
+                    args: [6, 50],
+                    msg: 'Password must be between 6 and 50 characters',
+                },
+            },
         },
     },
     {
@@ -81,11 +121,13 @@ export async function findUserById(id) {
     }
 }
 
-export async function createUser(username, password) {
+export async function createUser(userData) {
     try {
-        const hashedPassword = await bcrypt.hash(password, 12);
+        const hashedPassword = await bcrypt.hash(userData.password, 12);
         const user = await Users.create({
-            username: username,
+            username: userData.username,
+            email: userData.email,
+            mobilePhone: userData.mobilePhone,
             password: hashedPassword,
         });
         return user;

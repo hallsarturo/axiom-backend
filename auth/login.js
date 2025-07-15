@@ -33,7 +33,9 @@ router.post('/', async (req, res) => {
         // return res.json({ token });
 
         // No user found. Redirect to Signup
-        return res.status(401).json({ message: `no username '${username}' found.` });
+        return res
+            .status(401)
+            .json({ message: `no username '${username}' found.` });
     } else if (user === 2) {
         return res.status(401).json({ message: 'incorrect password' });
     } else {
@@ -45,7 +47,9 @@ router.post('/', async (req, res) => {
             'secret',
             { expiresIn: '1h' }
         );
-        console.log('Token: ', token);
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('Token: ', token);
+        }
         res.json({ token });
     }
 });
