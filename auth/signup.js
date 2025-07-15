@@ -7,19 +7,30 @@ import { createUser, findUserByUsername, findUserById } from '../user/model.js';
 const router = Router();
 
 // Configuring Passport-JWT
-let opt = {};
+let opts = {};
 opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 opts.secretOrKey = 'secret';
 // PRO: Review security
 
 router.post('/', async (req, res) => {
-    const { username, email, mobilePhone, password } = req.body;
-    const user = await findUserByUsername(username, password);
+    const userData = req.body;
+    const user = await findUserByUsername(userData.username, userData.password);
 
     if (user === 0) {
         // Create new user
-        
-
+        const newUser = await createUser(userData);
+        const token = jwt.sign(
+            {
+                id: newUser.id,
+                username: newUser.username,
+            },
+            'secret',
+            { expiresIn: '1h' }
+        );
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('Token: ', token);
+        }
+        return res.json({ token });
     } else {
         // User already exists, try to Sign In
         res.status(401).json({
@@ -27,3 +38,13 @@ router.post('/', async (req, res) => {
         });
     }
 });
+
+passport.use(
+    new JwtStrategy(opts, async function (jwt_payload, done) {
+        const user = await findUserById(jwt_payload.id);
+        if (!user) return done(null, false);
+        return done(null, user);
+    })
+);
+
+export { router };

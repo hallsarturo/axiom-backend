@@ -11,7 +11,7 @@ import cors from 'cors';
 import passport from 'passport';
 import { router as userRouter } from './user/index.js';
 import { router as loginRouter } from './auth/login.js';
-import {router as signupRouter} from './auth/signup.js'
+import { router as signupRouter } from './auth/signup.js';
 
 dotenv.config();
 const app = express();
@@ -62,7 +62,7 @@ app.get('/', (req, resp) => {
     resp.send('Hello User');
 });
 app.use('/login', loginRouter);
-app.use('/signup', signupRouter)
+app.use('/signup', signupRouter);
 app.get('/user', userRouter);
 app.get(
     '/profile',

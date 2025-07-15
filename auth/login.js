@@ -18,20 +18,6 @@ router.post('/', async (req, res) => {
     const user = await findUserByUsername(username, password);
 
     if (user === 0) {
-        // Create new user
-
-        // const newUser = await createUser(username, password);
-        // const token = jwt.sign(
-        //     {
-        //         id: newUser.id,
-        //         username: newUser.username,
-        //     },
-        //     'secret',
-        //     { expiresIn: '1h' }
-        // );
-        // console.log('Token: ', token);
-        // return res.json({ token });
-
         // No user found. Redirect to Signup
         return res
             .status(401)

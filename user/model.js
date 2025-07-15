@@ -4,14 +4,19 @@ dotenv.config();
 import { Sequelize, DataTypes } from 'sequelize';
 import bcrypt from 'bcrypt';
 import parsePhoneNumber from 'libphonenumber-js';
+import config from '../config/config.js';
+
+const env = process.env.NODE_ENV || 'development';
+const dbConfig = config[env];
 
 const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASS,
+    dbConfig.database,
+    dbConfig.username,
+    dbConfig.password,
     {
-        host: 'localhost',
-        dialect: 'postgres',
+        host: dbConfig.host,
+        port: dbConfig.port,
+        dialect: dbConfig.dialect,
     }
 );
 
@@ -88,16 +93,16 @@ const Users = sequelize.define(
     }
 );
 
-export async function findUserByUsername(username, password) {
+export async function findUserByUsername(userData) {
     try {
         const user = await Users.findOne({
-            where: { username },
+            where: { username: userData.username },
         });
         if (!user) {
             console.log('no username found');
             return 0;
         }
-        const match = await bcrypt.compare(password, user.password);
+        const match = await bcrypt.compare(userData.password, user.password);
         if (!match) {
             console.log('incorrect username or password');
             return 2;
@@ -109,9 +114,9 @@ export async function findUserByUsername(username, password) {
     }
 }
 
-export async function findUserById(id) {
+export async function findUserById(userData) {
     try {
-        const user = await Users.findByPk(id);
+        const user = await Users.findByPk(userData.id);
         if (!user) {
             return null;
         }
