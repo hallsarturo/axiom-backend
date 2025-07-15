@@ -42,7 +42,9 @@ const Users = sequelize.define(
         username: {
             type: DataTypes.STRING(50),
             allowNull: false,
-            unique: true,
+            unique: {
+                msg: 'The username is already in use.',
+            },
             validate: {
                 len: {
                     args: [6, 50],
@@ -58,7 +60,9 @@ const Users = sequelize.define(
         email: {
             type: DataTypes.STRING,
             allowNull: false,
-            unique: true,
+            unique: {
+                msg: 'The email address is already in use.',
+            },
             validate: {
                 isEmail: {
                     msg: 'Invalid email address',
@@ -68,6 +72,9 @@ const Users = sequelize.define(
         mobilePhone: {
             type: DataTypes.STRING,
             allowNull: false,
+            unique: {
+                msg: 'This phone number is already in use',
+            },
             validate: {
                 async isValidPhone(value) {
                     const phone = parsePhoneNumber(value);
@@ -80,12 +87,6 @@ const Users = sequelize.define(
         password: {
             type: DataTypes.STRING(255),
             allowNull: false,
-            validate: {
-                len: {
-                    args: [6, 50],
-                    msg: 'Password must be between 6 and 50 characters',
-                },
-            },
         },
     },
     {
@@ -110,7 +111,8 @@ export async function findUserByUsername(userData) {
             return user;
         }
     } catch (err) {
-        return err;
+        console.error('Error finding user:', err);
+        throw err;
     }
 }
 
@@ -122,7 +124,42 @@ export async function findUserById(userData) {
         }
         return user;
     } catch (err) {
-        console.error(err);
+        console.error('Error finding user:', err);
+        throw err;
+    }
+}
+export async function validateUniqueFields(userData) {
+    try {
+        const existingUser = await Users.findOne({
+            where: {
+                [Sequelize.Op.or]: [
+                    { username: userData.username },
+                    { email: userData.email },
+                    { mobilePhone: userData.mobilePhone },
+                ],
+            },
+        });
+
+        if (existingUser) {
+            if (existingUser.username === userData.username) {
+                throw new Error(
+                    `The username '${userData.username}' is already in use.`
+                );
+            }
+            if (existingUser.email === userData.email) {
+                throw new Error(
+                    `The email '${userData.email}' is already in use.`
+                );
+            }
+            if (existingUser.mobilePhone === userData.mobilePhone) {
+                throw new Error(
+                    `The phone number '${userData.mobilePhone}' is already in use.`
+                );
+            }
+        }
+    } catch (err) {
+        console.error('Error validating unique fields:', err);
+        throw err;
     }
 }
 
@@ -137,6 +174,17 @@ export async function createUser(userData) {
         });
         return user;
     } catch (err) {
-        return err;
+        if (err.name === 'SequelizeValidationError') {
+            // Collect all validation error messages
+            const messages = err.errors.map((error) => error.message);
+            throw new Error(messages.join(', '));
+        } else if (err.name === 'SequelizeUniqueConstraintError') {
+            const field = err.errors[0].path;
+            const value = err.errors[0].value;
+            throw new Error(`The ${field} '${value}' is already in use.`);
+        } else {
+            console.error('Error creating user:', err);
+            throw new Error('An unexpected error occurred.');
+        }
     }
 }

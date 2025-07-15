@@ -2,7 +2,12 @@ import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
-import { createUser, findUserByUsername, findUserById } from '../user/model.js';
+import {
+    createUser,
+    findUserByUsername,
+    findUserById,
+    validateUniqueFields,
+} from '../user/model.js';
 
 const router = Router();
 
@@ -13,11 +18,13 @@ opts.secretOrKey = 'secret';
 // PRO: Review security
 
 router.post('/', async (req, res) => {
-    const userData = req.body;
-    console.log('userData: ', userData);
-    const user = await findUserByUsername(userData);
+    try {
+        const userData = req.body;
+        console.log('userData: ', userData);
 
-    if (user === 0) {
+        // Validate unique fields
+        const user = await validateUniqueFields(userData);
+
         // Create new user
         const newUser = await createUser(userData);
         const token = jwt.sign(
@@ -28,15 +35,10 @@ router.post('/', async (req, res) => {
             'secret',
             { expiresIn: '1h' }
         );
-        if (process.env.NODE_ENV !== 'production') {
-            console.log('Token: ', token);
-        }
-        return res.json({ token });
-    } else {
-        // User already exists, try to Sign In
-        res.status(401).json({
-            message: `User '${userData.username}' already exists, try logging in instead`,
-        });
+        return res.json({ token, user: newUser });
+    } catch (err) {
+        console.error('Signup error:', err.message);
+        res.status(400).json({ error: err.message });
     }
 });
 
