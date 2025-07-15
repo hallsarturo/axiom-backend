@@ -14,7 +14,8 @@ opts.secretOrKey = 'secret';
 
 router.post('/', async (req, res) => {
     const userData = req.body;
-    const user = await findUserByUsername(userData.username, userData.password);
+    console.log('userData: ', userData);
+    const user = await findUserByUsername(userData);
 
     if (user === 0) {
         // Create new user
@@ -34,7 +35,7 @@ router.post('/', async (req, res) => {
     } else {
         // User already exists, try to Sign In
         res.status(401).json({
-            message: `User '${username}' already exists, try logging in instead`,
+            message: `User '${userData.username}' already exists, try logging in instead`,
         });
     }
 });
