@@ -17,7 +17,7 @@ const migration = {
                 unique: true,
             },
             mobilePhone: {
-                type: Sequelize.STRING,
+                type: Sequelize.STRING(20),
                 allowNull: false,
             },
             password: {

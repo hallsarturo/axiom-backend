@@ -9,6 +9,7 @@ import {
     validateUniqueFields,
 } from '../user/model.js';
 import rateLimit from 'express-rate-limit';
+import { createVerification, createVerificationCheck } from '../lib/twilio.js';
 
 const router = Router();
 
@@ -16,21 +17,25 @@ const router = Router();
 let opts = {};
 opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 opts.secretOrKey = 'secret';
-// PRO: Review security
+// PRO: Review security, activate signupLimiter
 
 const signupLimiter = rateLimit({
+    // ACTIVATE IN PRO
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 5, // Limit each IP to 5 requests per windowMs
     message: { error: 'Too many signup attempts, please try again later.' },
 });
 
-router.post('/', signupLimiter, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const userData = req.body;
         console.log('userData: ', userData);
 
         // Validate unique fields
-        const user = await validateUniqueFields(userData);
+        await validateUniqueFields(userData);
+
+        // 2F verification via sms with Twilio
+        createVerification()
 
         // Create new user
         const newUser = await createUser(userData);

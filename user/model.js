@@ -30,7 +30,6 @@ try {
 }
 
 // Define User model
-
 const Users = sequelize.define(
     'users',
     {
@@ -70,7 +69,7 @@ const Users = sequelize.define(
             },
         },
         mobilePhone: {
-            type: DataTypes.STRING,
+            type: DataTypes.STRING(20),
             allowNull: false,
             unique: {
                 msg: 'This phone number is already in use',
@@ -87,6 +86,42 @@ const Users = sequelize.define(
         password: {
             type: DataTypes.STRING(255),
             allowNull: false,
+        },
+    },
+    {
+        timestamps: false,
+    }
+);
+
+// Define pending signups
+const PendingSignups = sequelize.define(
+    'pending_signups',
+    {
+        id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true,
+        },
+        username: {
+            type: DataTypes.STRING(50),
+            allowNull: false,
+        },
+        email: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        mobilePhone: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        verificationCode: {
+            type: DataTypes.STRING(10),
+            allowNull: false,
+        },
+        createdAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: Sequelize.NOW,
         },
     },
     {
