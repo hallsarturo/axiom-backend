@@ -103,3 +103,4 @@ GET /favicon.ico 404 150 - 1.503 ms
 ::1 - - [16/Jul/2025:00:17:39 +0000] "POST /signup HTTP/1.1" 400 60 "-" "node"
 ::1 - - [16/Jul/2025:02:07:21 +0000] "POST /signup HTTP/1.1" 200 362 "-" "node"
 ::1 - - [16/Jul/2025:02:08:53 +0000] "POST /signup HTTP/1.1" 200 358 "-" "node"
+::1 - - [16/Jul/2025:15:33:15 +0000] "POST /logut HTTP/1.1" 404 145 "-" "node"

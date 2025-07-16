@@ -223,3 +223,41 @@ export async function createUser(userData) {
         }
     }
 }
+
+export async function createPendingUser(userData) {
+    try {
+        const hashedPassword = await bcrypt.hash(userData.password, 12);
+        const user = await PendingSignups.create({
+            username: userData.username,
+            email: userData.email,
+            mobilePhone: userData.mobilePhone,
+            password: hashedPassword,
+        });
+        return user;
+    } catch (err) {
+        console.error(err);
+        throw new Error(`there was an error`);
+    }
+}
+
+export async function findPendingUserByUsername(username) {
+    try {
+        const user = await PendingSignups.findOne(username);
+        if (!user) {
+            return null;
+        }
+        return user;
+    } catch (err) {
+        console.error('Error finding pending user:', err);
+        throw err;
+    }
+}
+
+export async function removePendingUser(pendingUser) {
+    try {
+        await PendingSignups.destroy({ where: { id: pendingUser.id } });
+    } catch (err) {
+        console.error('Error removing pending user:', err);
+        throw err;
+    }
+}
