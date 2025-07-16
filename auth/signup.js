@@ -40,6 +40,10 @@ router.post('/', async (req, res) => {
         // Validate unique fields
         await validateUniqueFields(userData);
 
+        // Save Data to server session
+        req.session.userData = userData;
+        console.log('Session:', req.session);
+
         // Send 2F sms verification code to client via Twilio
         await createVerification(mobilePhone);
 
@@ -58,8 +62,22 @@ router.post('/', async (req, res) => {
 
 router.post('/verify', async (req, res) => {
     try {
-        const userData = req.body;
-        console.log('Data: ', userData);
+        console.log('Entered to /verify call');
+
+        // Get userData from session
+        const userData = req.session.userData;
+        console.log('req.body:', req.body);
+        const { otpSignup: otpCode } = req.body;
+        console.log('otpCode:', otpCode);
+        console.log('Session:', req.session);
+        if (!userData) {
+            return res
+                .status(400)
+                .json({ error: 'Session expired or no signup data found.' });
+        }
+
+        console.log('Data: ', userData, ' otpCode: ', otpCode);
+
         const pendingUser = await findPendingUserByUsername(userData.username);
         if (!pendingUser) {
             return res
@@ -69,7 +87,7 @@ router.post('/verify', async (req, res) => {
 
         // validate verification code with Twilio
         const verificationResult = await verificationCheck(
-            userData.verificationCode,
+            otpCode,
             userData.mobilePhone
         );
         switch (verificationResult.status) {
@@ -87,10 +105,10 @@ router.post('/verify', async (req, res) => {
                     'secret',
                     { expiresIn: '1h' }
                 );
-                return res.json({
+                return res.status(200).json({
                     token,
                     user: newUser,
-                    essage: 'Signup complete',
+                    Message: 'Signup complete',
                 });
             case 'pending':
                 return res.status(400).json({

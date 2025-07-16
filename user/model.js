@@ -114,14 +114,9 @@ const PendingSignups = sequelize.define(
             type: DataTypes.STRING,
             allowNull: false,
         },
-        verificationCode: {
-            type: DataTypes.STRING(10),
+        password: {
+            type: DataTypes.STRING(255),
             allowNull: false,
-        },
-        createdAt: {
-            type: DataTypes.DATE,
-            allowNull: false,
-            defaultValue: Sequelize.NOW,
         },
     },
     {
@@ -200,12 +195,11 @@ export async function validateUniqueFields(userData) {
 
 export async function createUser(userData) {
     try {
-        const hashedPassword = await bcrypt.hash(userData.password, 12);
         const user = await Users.create({
             username: userData.username,
             email: userData.email,
             mobilePhone: userData.mobilePhone,
-            password: hashedPassword,
+            password: userData.password,
         });
         return user;
     } catch (err) {

@@ -43,7 +43,7 @@ app.use(
         secret: 'secret',
         resave: false,
         saveUninitialized: false,
-        cookie: { secure: true },
+        cookie: { secure: true, maxAge: 15 * 60 * 1000, sameSite: 'none', httpOnly: true },
     })
 );
 // CORS
