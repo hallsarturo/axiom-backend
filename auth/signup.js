@@ -38,7 +38,7 @@ router.post('/', async (req, res) => {
         await validateUniqueFields(userData);
 
         // Send 2F sms verification code to client via Twilio
-        //await createVerification(mobilePhone);
+        await createVerification(mobilePhone);
 
         // Store in pending_signups
         const provisionalUser = await createPendingUser(userData);
@@ -105,16 +105,16 @@ router.post('/verify', async (req, res) => {
         }
 
         // validate verification code with Twilio
-        // const verificationResult = await verificationCheck(
-        //     otpCode,
-        //     userData.mobilePhone
-        // );
-        let verificationResult;
-        if (otpCode === '123456') {
-            verificationResult = { status: 'approved' };
-        } else {
-            verificationResult = { status: 'pending' };
-        }
+        const verificationResult = await verificationCheck(
+            otpCode,
+            userData.mobilePhone
+        );
+        // let verificationResult;
+        // if (otpCode === '123456') {
+        //     verificationResult = { status: 'approved' };
+        // } else {
+        //     verificationResult = { status: 'pending' };
+        // }
         switch (verificationResult.status) {
             case 'approved':
                 // Create new user
