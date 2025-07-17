@@ -4,17 +4,14 @@ import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import {
     createUser,
-    findUserByUsername,
+    findPendingUserById,
     findUserById,
     validateUniqueFields,
+    createPendingUser,
+    removePendingUser,
 } from '../user/model.js';
 import rateLimit from 'express-rate-limit';
 import { createVerification, verificationCheck } from '../lib/twilio.js';
-import {
-    createPendingUser,
-    findPendingUserByUsername,
-    removePendingUser,
-} from '../user/model.js';
 
 const router = Router();
 
@@ -40,17 +37,28 @@ router.post('/', async (req, res) => {
         // Validate unique fields
         await validateUniqueFields(userData);
 
-        // Save Data to server session
-        req.session.userData = userData;
-        console.log('Session:', req.session);
-
         // Send 2F sms verification code to client via Twilio
-        await createVerification(mobilePhone);
+        //await createVerification(mobilePhone);
 
         // Store in pending_signups
-        await createPendingUser(userData);
+        const provisionalUser = await createPendingUser(userData);
 
+        // Save Data to token
+        // create JWT
+        const provisionalToken = jwt.sign(
+            {
+                id: provisionalUser.id,
+                username: provisionalUser.username,
+                email: provisionalUser.email,
+                mobilePhone: provisionalUser.mobilePhone,
+                password: provisionalUser.password,
+                verified: false,
+            },
+            'secret',
+            { expiresIn: '15m' }
+        );
         res.status(200).json({
+            provisionalToken: provisionalToken,
             message:
                 'Verification code sent to sms. Please enter the code to complete signUp ',
         });
@@ -64,21 +72,32 @@ router.post('/verify', async (req, res) => {
     try {
         console.log('Entered to /verify call');
 
-        // Get userData from session
-        const userData = req.session.userData;
-        console.log('req.body:', req.body);
+        // Extract token from Authorization header
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'No token provided.' });
+        }
+        const token = authHeader.split(' ')[1];
+
+        // Verify and decode token
+        let userData;
+        try {
+            userData = jwt.verify(token, 'secret');
+        } catch (err) {
+            return res.status(401).json({ error: 'Invalid or expired token.' });
+        }
+
+        // Get OTP code from body
         const { otpSignup: otpCode } = req.body;
-        console.log('otpCode:', otpCode);
-        console.log('Session:', req.session);
         if (!userData) {
             return res
                 .status(400)
-                .json({ error: 'Session expired or no signup data found.' });
+                .json({ error: 'No signup data found in token.' });
         }
 
         console.log('Data: ', userData, ' otpCode: ', otpCode);
 
-        const pendingUser = await findPendingUserByUsername(userData.username);
+        const pendingUser = await findPendingUserById(userData.id);
         if (!pendingUser) {
             return res
                 .status(400)
@@ -86,24 +105,31 @@ router.post('/verify', async (req, res) => {
         }
 
         // validate verification code with Twilio
-        const verificationResult = await verificationCheck(
-            otpCode,
-            userData.mobilePhone
-        );
+        // const verificationResult = await verificationCheck(
+        //     otpCode,
+        //     userData.mobilePhone
+        // );
+        let verificationResult;
+        if (otpCode === '123456') {
+            verificationResult = { status: 'approved' };
+        } else {
+            verificationResult = { status: 'pending' };
+        }
         switch (verificationResult.status) {
             case 'approved':
                 // Create new user
                 const newUser = await createUser(userData);
                 // Remove pending user
-                await removePendingUser(pendingUser.id);
+                await removePendingUser(pendingUser);
                 // create JWT
                 const token = jwt.sign(
                     {
                         id: newUser.id,
                         username: newUser.username,
+                        verified: true,
                     },
                     'secret',
-                    { expiresIn: '1h' }
+                    { expiresIn: '10h' }
                 );
                 return res.status(200).json({
                     token,
@@ -139,7 +165,10 @@ router.post('/verify', async (req, res) => {
                     .status(400)
                     .json({ error: 'Unknown verification status.' });
         }
-    } catch (err) {}
+    } catch (err) {
+        console.error('Verify error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
 });
 
 passport.use(

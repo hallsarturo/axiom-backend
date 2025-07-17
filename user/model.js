@@ -230,13 +230,13 @@ export async function createPendingUser(userData) {
         return user;
     } catch (err) {
         console.error(err);
-        throw new Error(`there was an error`);
+        throw new Error(`pending user duplicate`);
     }
 }
 
-export async function findPendingUserByUsername(username) {
+export async function findPendingUserById(id) {
     try {
-        const user = await PendingSignups.findOne(username);
+        const user = await PendingSignups.findByPk(id);
         if (!user) {
             return null;
         }

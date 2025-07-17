@@ -12,6 +12,7 @@ import passport from 'passport';
 import { router as userRouter } from './user/index.js';
 import { router as loginRouter } from './auth/login.js';
 import { router as signupRouter } from './auth/signup.js';
+import helmet from 'helmet'
 
 dotenv.config();
 const app = express();
@@ -37,15 +38,6 @@ function requireHTTPS(req, res, next) {
     res.status(403).send('HTTPS Required');
 }
 app.use(requireHTTPS);
-//Express-session
-app.use(
-    session({
-        secret: 'secret',
-        resave: false,
-        saveUninitialized: false,
-        cookie: { secure: true, maxAge: 15 * 60 * 1000, sameSite: 'none', httpOnly: true },
-    })
-);
 // CORS
 app.use(
     cors({
@@ -55,6 +47,22 @@ app.use(
         allowedHeaders: ['Content-Type', 'Authorization'],
     })
 );
+//Express-session
+app.use(
+    session({
+        secret: 'secret',
+        resave: false,
+        saveUninitialized: true,
+        cookie: {
+            secure: true,
+            maxAge: 15 * 60 * 1000,
+            sameSite: 'none',
+            httpOnly: true,
+        },
+    })
+);
+// helmet
+app.use(helmet())
 // end Middleware
 
 // ROUTES
@@ -94,9 +102,9 @@ const httpServer = http.createServer(app);
 const httpsServer = https.createServer(options, app);
 httpServer.on('error', (err) => console.error(err));
 
-httpServer.listen(port, () => {
-    console.log(`Server ready HTTP, app listening on port ${port}`);
-});
+// httpServer.listen(port, () => {
+//     console.log(`Server ready HTTP, app listening on port ${port}`);
+// });
 httpsServer.listen(securePort, () => {
     console.log(`Server ready HTTPS, app listening on port ${securePort}`);
 });
