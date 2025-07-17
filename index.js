@@ -12,7 +12,8 @@ import passport from 'passport';
 import { router as userRouter } from './user/index.js';
 import { router as loginRouter } from './auth/login.js';
 import { router as signupRouter } from './auth/signup.js';
-import helmet from 'helmet'
+import { router as authRouter } from './auth/auth.js';
+import helmet from 'helmet';
 
 dotenv.config();
 const app = express();
@@ -30,7 +31,7 @@ app.use(morgan('combined', { stream: accessLogStream }));
 // JSON Parse
 app.use(express.json());
 //
-// Block non secure requests (proal)
+// Block non secure requests
 function requireHTTPS(req, res, next) {
     if (req.secure) {
         return next();
@@ -62,7 +63,7 @@ app.use(
     })
 );
 // helmet
-app.use(helmet())
+app.use(helmet());
 // end Middleware
 
 // ROUTES
@@ -71,6 +72,7 @@ app.get('/', (req, resp) => {
 });
 app.use('/login', loginRouter);
 app.use('/signup', signupRouter);
+app.use('/auth', authRouter);
 app.get('/user', userRouter);
 app.get(
     '/profile',

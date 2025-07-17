@@ -21,7 +21,6 @@ const sequelize = new Sequelize(
 );
 
 // Test db connection
-
 try {
     await sequelize.authenticate();
     console.log('Conection to PostgreSQL has been established successfully');
@@ -93,7 +92,7 @@ const Users = sequelize.define(
     }
 );
 
-// Define pending signups
+// Define PendingSignups
 const PendingSignups = sequelize.define(
     'pending_signups',
     {
@@ -123,6 +122,45 @@ const PendingSignups = sequelize.define(
         timestamps: false,
     }
 );
+
+// Define authProviders
+const AuthProviders = sequelize.define(
+    'auth_providers',
+    {
+        id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true,
+        },
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: Users,
+                key: 'id',
+            },
+        },
+        provider: {
+            type: DataTypes.STRING(50),
+            allowNull: false,
+        },
+        providerId: {
+            type: DataTypes.STRING(100),
+            allowNull: false,
+        },
+        email: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+    },
+    {
+        timestamps: true,
+    }
+);
+
+// Associations
+Users.hasMany(AuthProviders, { foreignKey: 'userId' });
+AuthProviders.belongsTo(Users, { foreignKey: 'userId' });
 
 export async function findUserByUsername(userData) {
     try {
@@ -254,4 +292,26 @@ export async function removePendingUser(pendingUser) {
         console.error('Error removing pending user:', err);
         throw err;
     }
+}
+
+export async function findUserByEmail(email) {
+    try {
+        const user = await Users.findOne({
+            where: { email },
+        });
+        return user;
+    } catch (err) {
+        console.error('Error finding user by email:', err);
+        throw err;
+    }
+}
+
+export async function createAuthProvider(profile) {
+    AuthProviders.create({
+        userId: profile.id,
+        provider: 'google',
+        providerId: profile.id,
+        email,
+    });
+    console.log('Created new user from Google profile');
 }
