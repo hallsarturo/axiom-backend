@@ -51,7 +51,17 @@ passport.use(
                     //     password: null, // or a random string, since Google users don't need a password
                     // });
                     // Optionally: create entry in auth_providers table here
-                    await createAuthProvider(profile);
+                    const data = {
+                        userId: user.id, // Use your local user id, not Google profile id
+                        provider: 'google',
+                        providerId: profile.id,
+                        email,
+                        displayName: profile.displayName,
+                        familyName: profile.name?.familyName,
+                        givenName: profile.name?.givenName,
+                        photoUrl: profile.photos?.[0]?.value,
+                    };
+                    await createAuthProvider(data);
                     console.log('Created new user from Google profile');
                 }
 

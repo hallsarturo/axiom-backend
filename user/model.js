@@ -152,6 +152,22 @@ const AuthProviders = sequelize.define(
             type: DataTypes.STRING,
             allowNull: true,
         },
+        displayName: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        familyName: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        givenName: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        photoUrl: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
     },
     {
         timestamps: true,
@@ -306,12 +322,16 @@ export async function findUserByEmail(email) {
     }
 }
 
-export async function createAuthProvider(profile) {
+export async function createAuthProvider(data) {
     AuthProviders.create({
-        userId: profile.id,
-        provider: 'google',
-        providerId: profile.id,
-        email,
+        userId: data.userId,
+        provider: data.provider,
+        providerId: data.providerId,
+        email: data.email,
+        displayName: data.displayName,
+        familyName: data.familyName,
+        givenName: data.givenName,
+        photoUrl: data.photoUrl,
     });
     console.log('Created new user from Google profile');
 }
