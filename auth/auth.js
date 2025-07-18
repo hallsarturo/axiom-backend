@@ -9,6 +9,7 @@ import {
     findUserByEmail,
     findUserById,
     upsertAuthProvider,
+    createUser,
 } from '../user/model.js';
 
 dotenv.config();
@@ -133,7 +134,7 @@ router.get(
         res.cookie('token', token, {
             httpOnly: true,
             secure: true, // always true for HTTPS dev/prod
-            sameSite: 'none', // required for cross-origin cookies
+            sameSite: 'lax', // required for cross-origin cookies
             maxAge: 10 * 60 * 60 * 1000, // 10 hours
         }).redirect(`${process.env.FRONTEND_URL}/auth/success`);
     }

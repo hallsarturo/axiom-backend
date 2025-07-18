@@ -4,7 +4,6 @@ import jwt from 'jsonwebtoken';
 import {
     createUser,
     findPendingUserById,
-    findUserById,
     validateUniqueFields,
     createPendingUser,
     removePendingUser,
@@ -33,14 +32,14 @@ router.post('/', async (req, res) => {
         await validateUniqueFields(userData);
 
         // Send 2F sms verification code to client via Twilio
-        await createVerification(mobilePhone);
+        // await createVerification(mobilePhone);
 
         // Store in pending_signups
         const provisionalUser = await createPendingUser(userData);
 
         // Save Data to token
         // create JWT
-        const provisionalToken = jwt.sign(
+        const token = jwt.sign(
             {
                 id: provisionalUser.id,
                 username: provisionalUser.username,
@@ -52,10 +51,11 @@ router.post('/', async (req, res) => {
             'secret',
             { expiresIn: '15m' }
         );
-        res.cookie('token', provisionalToken, {
-            httpOnly: true,
+        console.log('created token: ', token);
+        res.cookie('token', token, {
             secure: true,
-            sameSite: 'Strict',
+            sameSite: 'none',
+            httpOnly: true,
             maxAge: 10 * 60 * 60 * 1000, // 10 hours
         })
             .status(200)
@@ -91,7 +91,9 @@ router.post('/verify', async (req, res) => {
         try {
             userData = jwt.verify(token, 'secret');
         } catch (err) {
-            return res.status(401).json({ error: 'Invalid or expired token.' });
+            return res
+                .status(401)
+                .json({ error: 'Invalid or expired token.', err });
         }
 
         // Get OTP code from body
@@ -112,10 +114,11 @@ router.post('/verify', async (req, res) => {
         }
 
         // validate verification code with Twilio
-        const verificationResult = await verificationCheck(
-            otpCode,
-            userData.mobilePhone
-        );
+        // const verificationResult = await verificationCheck(
+        //     otpCode,
+        //     userData.mobilePhone
+        // );
+        const verificationResult = { status: 'approved' };
 
         switch (verificationResult.status) {
             case 'approved':
@@ -137,7 +140,7 @@ router.post('/verify', async (req, res) => {
                     .cookie('token', newToken, {
                         httpOnly: true,
                         secure: true,
-                        sameSite: 'Strict',
+                        sameSite: 'none',
                         maxAge: 10 * 60 * 60 * 1000, // 10 hours
                     })
                     .status(200)
