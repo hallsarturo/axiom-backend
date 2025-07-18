@@ -27,6 +27,7 @@
     "passport-google-oauth": "^2.0.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
+    "passport-orcid": "^0.0.4",
     "pg": "^8.16.0",
     "pg-hstore": "^2.3.4",
     "pug": "^3.0.3",

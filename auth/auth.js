@@ -3,13 +3,16 @@ import dotenv from 'dotenv';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { findUserByEmail, findUserById, upsertAuthProvider } from '../user/model.js';
+import { Strategy as OrcidStrategy } from 'passport-orcid';
+import {
+    findUserByEmail,
+    findUserById,
+    upsertAuthProvider,
+} from '../user/model.js';
 
 dotenv.config();
 
 const router = Router();
-
-
 
 // GOOOGLE
 
@@ -115,4 +118,38 @@ router.get(
 );
 
 // END GOOGLE CONFIG
+
+// ORCID
+
+// router.get('/auth/orcid', passport.authenticate('orcid'));
+
+// passport.use(
+//     new OrcidStrategy(
+//         {
+//             sandbox: process.env.NODE_ENV !== 'production', // use the sandbox for non-production environments
+//             clientID: ORCID_CLIENT_ID,
+//             clientSecret: ORCID_CLIENT_SECRET,
+//             callbackURL: '/auth/orcid/callback',
+//         },
+//         function (accessToken, refreshToken, params, profile, done) {
+//             // NOTE: `profile` is empty, use `params` instead
+//             User.findOrCreate({ orcid: params.id }, function (err, user) {
+//                 return done(err, user);
+//             });
+//         }
+//     )
+// );
+
+// // redirect
+// router.get(
+//     '/auth/orcid/callback',
+//     passport.authenticate('orcid', { failureRedirect: '/login' }),
+//     function (req, res) {
+//         // Successful authentication, redirect home.
+//         res.redirect('/');
+//     }
+// );
+
+// END ORCID CONFIG
+
 export { router };
