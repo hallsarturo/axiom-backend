@@ -1,12 +1,15 @@
 import { Router } from 'express';
 import dotenv from 'dotenv';
 import passport from 'passport';
+import jwt from 'jsonwebtoken';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { findUserByEmail, createAuthProvider } from '../user/model.js';
+import { findUserByEmail, findUserById, upsertAuthProvider } from '../user/model.js';
 
 dotenv.config();
 
 const router = Router();
+
+
 
 // GOOOGLE
 
@@ -39,31 +42,32 @@ passport.use(
                     );
                 }
 
-                let user = await findUserByEmail(email);
+                const user = await findUserByEmail(email);
 
                 if (!user) {
-                    // Optionally: create user in Users table
-                    // user = await createUser({
-                    //     username: profile.displayName
-                    //         .replace(/\s+/g, '')
-                    //         .toLowerCase(),
-                    //     email,
-                    //     password: null, // or a random string, since Google users don't need a password
-                    // });
-                    // Optionally: create entry in auth_providers table here
-                    const data = {
-                        userId: user.id, // Use your local user id, not Google profile id
-                        provider: 'google',
-                        providerId: profile.id,
+                    // create user in Users table
+                    user = await createUser({
+                        username: profile.displayName
+                            .replace(/\s+/g, '')
+                            .toLowerCase(),
                         email,
-                        displayName: profile.displayName,
-                        familyName: profile.name?.familyName,
-                        givenName: profile.name?.givenName,
-                        photoUrl: profile.photos?.[0]?.value,
-                    };
-                    await createAuthProvider(data);
-                    console.log('Created new user from Google profile');
+                        password: null, // or a random string, since Google users don't need a password
+                        mobilePhone: null,
+                    });
                 }
+                // Always ensure auth provider entry exists/updated
+                const providerData = {
+                    userId: user.id, // Use your local user id, not Google profile id
+                    provider: 'google',
+                    providerId: profile.id,
+                    email: email,
+                    displayName: profile.displayName,
+                    familyName: profile.name?.familyName,
+                    givenName: profile.name?.givenName,
+                    photoUrl: profile.photos?.[0]?.value,
+                };
+                await upsertAuthProvider(providerData);
+                console.log('Created new user from Google profile');
 
                 done(null, user);
             } catch (err) {
@@ -73,14 +77,20 @@ passport.use(
     )
 );
 
-//
-// passport.use(
-//     new JwtStrategy(opts, async function (jwt_payload, done) {
-//         const user = await findUserById(jwt_payload.id);
-//         if (!user) return done(null, false);
-//         return done(null, user);
-//     })
-// );
+// Serialize user to session (store user id)
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+
+// Deserialize user from session (fetch user by id)
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await findUserById({ id });
+        done(null, user);
+    } catch (err) {
+        done(err, null);
+    }
+});
 
 // redirect
 router.get(
@@ -88,10 +98,21 @@ router.get(
     passport.authenticate('google', {
         failureRedirect: `${process.env.FRONTEND_URL}/signup`,
     }),
-    function (req, res) {
-        const token = req.user.token; // Assuming the token is available on the user object
+    async function (req, res) {
+        // create JWT
+        const token = jwt.sign(
+            {
+                id: req.user.id,
+                username: req.user.username,
+                verified: true,
+            },
+            'secret',
+            { expiresIn: '10h' }
+        );
+
         res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${token}`);
     }
 );
 
+// END GOOGLE CONFIG
 export { router };

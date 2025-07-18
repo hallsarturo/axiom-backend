@@ -69,7 +69,7 @@ const Users = sequelize.define(
         },
         mobilePhone: {
             type: DataTypes.STRING(20),
-            allowNull: false,
+            allowNull: true,
             unique: {
                 msg: 'This phone number is already in use',
             },
@@ -84,7 +84,7 @@ const Users = sequelize.define(
         },
         password: {
             type: DataTypes.STRING(255),
-            allowNull: false,
+            allowNull: true,
         },
     },
     {
@@ -315,6 +315,9 @@ export async function findUserByEmail(email) {
         const user = await Users.findOne({
             where: { email },
         });
+        if (!user) {
+            return null;
+        }
         return user;
     } catch (err) {
         console.error('Error finding user by email:', err);
@@ -334,4 +337,25 @@ export async function createAuthProvider(data) {
         photoUrl: data.photoUrl,
     });
     console.log('Created new user from Google profile');
+}
+
+export async function upsertAuthProvider(providerData) {
+    try {
+        const [provider, created] = await AuthProviders.findOrCreate({
+            where: {
+                userId: providerData.userId,
+                provider: providerData.provider,
+            },
+            defaults: providerData,
+        });
+
+        if (!created) {
+            // Update existing entry with latest info
+            await provider.update(providerData);
+        }
+        return provider;
+    } catch (err) {
+        console.error('Error upserting auth provider:', err);
+        throw err;
+    }
 }

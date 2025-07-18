@@ -14,6 +14,7 @@ import { router as loginRouter } from './auth/login.js';
 import { router as signupRouter } from './auth/signup.js';
 import { router as authRouter } from './auth/auth.js';
 import helmet from 'helmet';
+import './auth/auth.js';
 
 dotenv.config();
 const app = express();
@@ -64,6 +65,8 @@ app.use(
 );
 // helmet
 app.use(helmet());
+
+
 // end Middleware
 
 // ROUTES
