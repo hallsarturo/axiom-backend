@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import dotenv from 'dotenv';
-import passport from 'passport';
 import jwt from 'jsonwebtoken';
+import passport from 'passport';
+import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as OrcidStrategy } from 'passport-orcid';
 import {
@@ -13,6 +14,21 @@ import {
 dotenv.config();
 
 const router = Router();
+
+// PASSPORT-JWT
+let opts = {};
+opts.jwtFromRequest = (req) => req?.cookies?.token || null; // Extract token from cookie
+opts.secretOrKey = 'secret';
+// opts.issuer = 'accoaccounts.examplesoft.com';
+// opts.audience = 'yoursite.net';
+
+passport.use(
+    new JwtStrategy(opts, async function (jwt_payload, done) {
+        const user = await findUserById(jwt_payload.id);
+        if (!user) return done(null, false);
+        return done(null, user);
+    })
+);
 
 // GOOOGLE
 
@@ -113,7 +129,13 @@ router.get(
             { expiresIn: '10h' }
         );
 
-        res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${token}`);
+        // Set JWT as httpOnly cookie and redirect
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: true, // always true for HTTPS dev/prod
+            sameSite: 'none', // required for cross-origin cookies
+            maxAge: 10 * 60 * 60 * 1000, // 10 hours
+        }).redirect(`${process.env.FRONTEND_URL}/auth/success`);
     }
 );
 

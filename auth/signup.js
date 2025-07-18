@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
-import passport from 'passport';
-import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
+
 import {
     createUser,
     findPendingUserById,
@@ -15,10 +14,6 @@ import { createVerification, verificationCheck } from '../lib/twilio.js';
 
 const router = Router();
 
-// Configuring Passport-JWT
-let opts = {};
-opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
-opts.secretOrKey = 'secret';
 // PRO: Review security, activate signupLimiter
 
 const signupLimiter = rateLimit({
@@ -57,11 +52,17 @@ router.post('/', async (req, res) => {
             'secret',
             { expiresIn: '15m' }
         );
-        res.status(200).json({
-            provisionalToken: provisionalToken,
-            message:
-                'Verification code sent to sms. Please enter the code to complete signUp ',
-        });
+        res.cookie('token', provisionalToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'Strict',
+            maxAge: 10 * 60 * 60 * 1000, // 10 hours
+        })
+            .status(200)
+            .json({
+                message:
+                    'Verification code sent to sms. Please enter the code to complete signUp ',
+            });
     } catch (err) {
         console.error('Signup error:', err.message);
         res.status(400).json({ error: err.message });
@@ -72,12 +73,18 @@ router.post('/verify', async (req, res) => {
     try {
         console.log('Entered to /verify call');
 
-        // Extract token from Authorization header
+        // Try to get token from Authorization header OR cookie
+        let token;
         const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.split(' ')[1];
+        } else if (req.cookies && req.cookies.token) {
+            token = req.cookies.token;
+        }
+
+        if (!token) {
             return res.status(401).json({ error: 'No token provided.' });
         }
-        const token = authHeader.split(' ')[1];
 
         // Verify and decode token
         let userData;
@@ -109,12 +116,7 @@ router.post('/verify', async (req, res) => {
             otpCode,
             userData.mobilePhone
         );
-        // let verificationResult;
-        // if (otpCode === '123456') {
-        //     verificationResult = { status: 'approved' };
-        // } else {
-        //     verificationResult = { status: 'pending' };
-        // }
+
         switch (verificationResult.status) {
             case 'approved':
                 // Create new user
@@ -122,7 +124,7 @@ router.post('/verify', async (req, res) => {
                 // Remove pending user
                 await removePendingUser(pendingUser);
                 // create JWT
-                const token = jwt.sign(
+                const newToken = jwt.sign(
                     {
                         id: newUser.id,
                         username: newUser.username,
@@ -131,11 +133,18 @@ router.post('/verify', async (req, res) => {
                     'secret',
                     { expiresIn: '10h' }
                 );
-                return res.status(200).json({
-                    token,
-                    user: newUser,
-                    Message: 'Signup complete',
-                });
+                return res
+                    .cookie('token', newToken, {
+                        httpOnly: true,
+                        secure: true,
+                        sameSite: 'Strict',
+                        maxAge: 10 * 60 * 60 * 1000, // 10 hours
+                    })
+                    .status(200)
+                    .json({
+                        user: newUser,
+                        message: 'Signup complete',
+                    });
             case 'pending':
                 return res.status(400).json({
                     error: 'Verification code is incorrect or not yet approved.',
@@ -170,13 +179,5 @@ router.post('/verify', async (req, res) => {
         res.status(400).json({ error: err.message });
     }
 });
-
-passport.use(
-    new JwtStrategy(opts, async function (jwt_payload, done) {
-        const user = await findUserById(jwt_payload.id);
-        if (!user) return done(null, false);
-        return done(null, user);
-    })
-);
 
 export { router };

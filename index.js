@@ -9,6 +9,7 @@ import https from 'https';
 import http2 from 'http2';
 import cors from 'cors';
 import passport from 'passport';
+import cookieParser from 'cookie-parser';
 import { router as userRouter } from './user/index.js';
 import { router as loginRouter } from './auth/login.js';
 import { router as signupRouter } from './auth/signup.js';
@@ -63,9 +64,11 @@ app.use(
         },
     })
 );
+// cookie Parser
+app.use(cookieParser());
+
 // helmet
 app.use(helmet());
-
 
 // end Middleware
 

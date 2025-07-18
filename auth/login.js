@@ -1,21 +1,13 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
-import passport from 'passport';
-import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
+
 import { createUser, findUserByUsername, findUserById } from '../user/model.js';
 
 const router = Router();
 
-// Configuring Passport-JWT
-let opts = {};
-opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
-opts.secretOrKey = 'secret';
-// opts.issuer = 'accoaccounts.examplesoft.com';
-// opts.audience = 'yoursite.net';
-
 router.post('/', async (req, res) => {
     const { username, password } = req.body;
-    const user = await findUserByUsername(username, password);
+    const user = await findUserByUsername({ username, password });
 
     if (user === 0) {
         // No user found. Redirect to Signup
@@ -36,16 +28,16 @@ router.post('/', async (req, res) => {
         if (process.env.NODE_ENV !== 'production') {
             console.log('Token: ', token);
         }
-        res.json({ token });
+        // Set JWT as httpOnly cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+            maxAge: 60 * 60 * 1000, // 1 hour
+        })
+            .status(200)
+            .json({ user, message: 'Login successful' });
     }
 });
-
-passport.use(
-    new JwtStrategy(opts, async function (jwt_payload, done) {
-        const user = await findUserById(jwt_payload.id);
-        if (!user) return done(null, false);
-        return done(null, user);
-    })
-);
 
 export { router };
