@@ -3,15 +3,9 @@ import jwt from 'jsonwebtoken';
 import passport from 'passport';
 import { Strategy as JwtStrategy } from 'passport-jwt';
 
-import {
-    createUser,
-    findPendingUserById,
-    validateUniqueFields,
-    createPendingUser,
-    removePendingUser,
-} from '../user/model.js';
+import db from '../../models/index.js';
 import rateLimit from 'express-rate-limit';
-import { createVerification, verificationCheck } from '../lib/twilio.js';
+import { createVerification, verificationCheck } from '../../lib/twilio.js';
 
 const router = Router();
 
@@ -31,13 +25,13 @@ router.post('/', async (req, res) => {
         console.log('userData: ', userData);
 
         // Validate unique fields
-        await validateUniqueFields(userData);
+        await db.users.validateUniqueFields(userData);
 
         // Send 2F sms verification code to client via Twilio
         // await createVerification(mobilePhone);
 
         // Store in pending_signups
-        const provisionalUser = await createPendingUser(userData);
+        const provisionalUser = await db.pending_signups.createPendingUser(userData);
 
         // Save Data to token
         // create JWT
@@ -81,7 +75,7 @@ opts.secretOrKey = 'secret';
 
 passport.use(
     new JwtStrategy(opts, async function (jwt_payload, done) {
-        const user = await findUserById(jwt_payload.id);
+        const user = await db.users.findUserById(jwt_payload.id);
         if (!user) return done(null, false);
         return done(null, user);
     })
@@ -124,7 +118,7 @@ router.post('/verify', async (req, res) => {
 
         console.log('Data: ', userData, ' otpCode: ', otpCode);
 
-        const pendingUser = await findPendingUserById(userData.id);
+        const pendingUser = await db.pending_signups.findPendingUserById(userData.id);
         if (!pendingUser) {
             return res
                 .status(400)
@@ -141,9 +135,9 @@ router.post('/verify', async (req, res) => {
         switch (verificationResult.status) {
             case 'approved':
                 // Create new user
-                const newUser = await createUser(userData);
+                const newUser = await db.users.createUser(userData);
                 // Remove pending user
-                await removePendingUser(pendingUser);
+                await db-pending_signups.removePendingUser(pendingUser);
                 // create JWT
                 const newToken = jwt.sign(
                     {

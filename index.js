@@ -10,18 +10,44 @@ import http2 from 'http2';
 import cors from 'cors';
 import passport from 'passport';
 import cookieParser from 'cookie-parser';
-import { router as userRouter } from './user/index.js';
-import { router as loginRouter } from './auth/login.js';
-import { router as signupRouter } from './auth/signup.js';
-import { router as authRouter } from './auth/auth.js';
+import { router as loginRouter } from './api/auth/login.js';
+import { router as signupRouter } from './api/auth/signup.js';
+import { router as authRouter } from './api/auth/auth.js';
+import Sequelize from 'sequelize';
 import helmet from 'helmet';
-import './auth/auth.js';
+import './api/auth/auth.js';
+import config from './config/config.js';
 
 dotenv.config();
 const app = express();
 const port = 4000;
 const securePort = 4010;
 const _log_dirname = '/Users/proal-mac/Code/node/axiom-backend/';
+
+// Test db connection
+const env = process.env.NODE_ENV || 'development';
+const dbConfig = config[env];
+let sequelize;
+if (dbConfig.use_env_variable) {
+    sequelize = new Sequelize(process.env[dbConfig.use_env_variable], dbConfig);
+} else {
+    sequelize = new Sequelize(
+        dbConfig.database,
+        dbConfig.username,
+        dbConfig.password,
+        dbConfig
+    );
+}
+(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Connection to PostgreSQL has been established successfully');
+  } catch (err) {
+    console.error('Unable to connect to PostgreSQL:', err);
+    process.exit(1); // Optionally exit if DB is not available
+  }
+})();
+
 
 // MIDDLEWARE
 // Logging:
@@ -73,21 +99,18 @@ app.use(helmet());
 // end Middleware
 
 // ROUTES
-app.get('/', (req, resp) => {
-    resp.send('Hello User');
-});
-app.use('/login', loginRouter);
-app.use('/signup', signupRouter);
-app.use('/auth', authRouter);
-app.get('/user', userRouter);
+app.use('/api/login', loginRouter);
+app.use('/api/signup', signupRouter);
+app.use('/api/auth', authRouter);
+//app.get('/user', userRouter);
 app.get(
-    '/profile',
+    '/api/profile',
     passport.authenticate('jwt', { session: false }),
     (req, res) => {
         res.json({ user: req.user });
     }
 );
-app.post('/logout', function (req, res, next) {
+app.post('/api/logout', function (req, res, next) {
     req.logout(function (err) {
         if (err) {
             return next(err);

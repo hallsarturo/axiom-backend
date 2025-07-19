@@ -10,10 +10,6 @@ const __dirname = path.dirname(__filename);
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
 const dbConfig = config[env];
-const config = await import('../config/config', {
-    assert: { type: 'json' },
-}).then((module) => module.default[env]);
-
 const db = {};
 
 let sequelize;

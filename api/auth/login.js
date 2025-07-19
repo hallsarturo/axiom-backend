@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 
-import { createUser, findUserByUsername, findUserById } from '../user/model.js';
+import db from '../../models/index.js';
 
 const router = Router();
 
 router.post('/', async (req, res) => {
     const { username, password } = req.body;
-    const user = await findUserByUsername({ username, password });
+    const user = await db.users.findUserByUsername({ username, password });
 
     if (user === 0) {
         // No user found. Redirect to Signup

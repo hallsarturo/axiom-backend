@@ -5,18 +5,13 @@ import passport from 'passport';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as OrcidStrategy } from 'passport-orcid';
-import {
-    findUserByEmail,
-    findUserById,
-    upsertAuthProvider,
-    createUser,
-} from '../user/model.js';
+import db from '../../models/index.js';
 
 dotenv.config();
 
 const router = Router();
 
-// PASSPORT-JWT
+// JWT
 let opts = {};
 opts.jwtFromRequest = (req) => req?.cookies?.token || null; // Extract token from cookie
 opts.secretOrKey = 'secret';
@@ -25,7 +20,7 @@ opts.secretOrKey = 'secret';
 
 passport.use(
     new JwtStrategy(opts, async function (jwt_payload, done) {
-        const user = await findUserById(jwt_payload.id);
+        const user = await db.users.findUserById(jwt_payload.id);
         if (!user) return done(null, false);
         return done(null, user);
     })
@@ -62,7 +57,7 @@ passport.use(
                     );
                 }
 
-                let user = await findUserByEmail(email);
+                let user = await db.users.findUserByEmail(email);
 
                 if (!user) {
                     // create user in Users table
@@ -86,7 +81,7 @@ passport.use(
                     givenName: profile.name?.givenName,
                     photoUrl: profile.photos?.[0]?.value,
                 };
-                await upsertAuthProvider(providerData);
+                await db.auth_providers.upsertAuthProvider(providerData);
                 console.log('Created new user from Google profile');
 
                 done(null, user);
@@ -105,7 +100,7 @@ passport.serializeUser((user, done) => {
 // Deserialize user from session (fetch user by id)
 passport.deserializeUser(async (id, done) => {
     try {
-        const user = await findUserById({ id });
+        const user = await db.users.findUserById({ id });
         done(null, user);
     } catch (err) {
         done(err, null);
