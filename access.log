@@ -361,3 +361,4 @@ GET /favicon.ico 404 150 - 1.503 ms
 ::1 - - [19/Jul/2025:00:38:40 +0000] "POST /logout HTTP/1.1" 500 1257 "-" "node"
 ::ffff:127.0.0.1 - - [19/Jul/2025:00:38:47 +0000] "GET /auth/google HTTP/1.1" 302 0 "https://localhost:3000/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:141.0) Gecko/20100101 Firefox/141.0"
 ::ffff:127.0.0.1 - - [19/Jul/2025:00:38:47 +0000] "GET /auth/google/callback?code=4%2F0AVMBsJg1rSs7tT7yEng33FREKeHVczTiO-1UidwjwZc3vkQzf5SNt4ZHJcz4CUF3DmKmRw&scope=email+profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+openid+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile&authuser=0&prompt=none HTTP/1.1" 302 64 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:141.0) Gecko/20100101 Firefox/141.0"
+::ffff:127.0.0.1 - - [19/Jul/2025:15:31:48 +0000] "GET /auth/google HTTP/1.1" 404 150 "https://localhost:3000/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:141.0) Gecko/20100101 Firefox/141.0"
