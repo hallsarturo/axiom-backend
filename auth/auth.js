@@ -62,7 +62,7 @@ passport.use(
                     );
                 }
 
-                const user = await findUserByEmail(email);
+                let user = await findUserByEmail(email);
 
                 if (!user) {
                     // create user in Users table
@@ -71,7 +71,7 @@ passport.use(
                             .replace(/\s+/g, '')
                             .toLowerCase(),
                         email,
-                        password: null, // or a random string, since Google users don't need a password
+                        password: Math.random().toString(36).slice(-8), // random string
                         mobilePhone: null,
                     });
                 }
@@ -116,7 +116,7 @@ passport.deserializeUser(async (id, done) => {
 router.get(
     '/google/callback',
     passport.authenticate('google', {
-        failureRedirect: `${process.env.FRONTEND_URL}/signup`,
+        failureRedirect: `${process.env.FRONTEND_URL}/`,
     }),
     async function (req, res) {
         // create JWT
@@ -134,7 +134,7 @@ router.get(
         res.cookie('token', token, {
             httpOnly: true,
             secure: true, // always true for HTTPS dev/prod
-            sameSite: 'lax', // required for cross-origin cookies
+            sameSite: 'none', // required for cross-origin cookies
             maxAge: 10 * 60 * 60 * 1000, // 10 hours
         }).redirect(`${process.env.FRONTEND_URL}/auth/success`);
     }

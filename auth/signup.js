@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
+import passport from 'passport';
+import { Strategy as JwtStrategy } from 'passport-jwt';
 
 import {
     createUser,
@@ -39,7 +41,7 @@ router.post('/', async (req, res) => {
 
         // Save Data to token
         // create JWT
-        const token = jwt.sign(
+        const prevToken = jwt.sign(
             {
                 id: provisionalUser.id,
                 username: provisionalUser.username,
@@ -51,11 +53,12 @@ router.post('/', async (req, res) => {
             'secret',
             { expiresIn: '15m' }
         );
-        console.log('created token: ', token);
-        res.cookie('token', token, {
+        console.log('created token: ', prevToken);
+        res.cookie('token', prevToken, {
+            httpOnly: true,
             secure: true,
             sameSite: 'none',
-            httpOnly: true,
+            domain: 'localhost',
             maxAge: 10 * 60 * 60 * 1000, // 10 hours
         })
             .status(200)
@@ -69,27 +72,42 @@ router.post('/', async (req, res) => {
     }
 });
 
+// PASSPORT-JWT
+let opts = {};
+opts.jwtFromRequest = (req) => req?.cookies?.token || null; // Extract token from cookie
+opts.secretOrKey = 'secret';
+// opts.issuer = 'accoaccounts.examplesoft.com';
+// opts.audience = 'yoursite.net';
+
+passport.use(
+    new JwtStrategy(opts, async function (jwt_payload, done) {
+        const user = await findUserById(jwt_payload.id);
+        if (!user) return done(null, false);
+        return done(null, user);
+    })
+);
+
 router.post('/verify', async (req, res) => {
     try {
         console.log('Entered to /verify call');
 
         // Try to get token from Authorization header OR cookie
-        let token;
-        const authHeader = req.headers.authorization;
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            token = authHeader.split(' ')[1];
-        } else if (req.cookies && req.cookies.token) {
-            token = req.cookies.token;
-        }
 
-        if (!token) {
+        let prevToken = req.cookies.token;
+        // if (authHeader && authHeader.startsWith('Bearer ')) {
+        //     token = authHeader.split(' ')[1];
+        // } else if (req.cookies && req.cookies.token) {
+        //     token = req.cookies.token;
+        // }
+
+        if (!prevToken) {
             return res.status(401).json({ error: 'No token provided.' });
         }
 
         // Verify and decode token
         let userData;
         try {
-            userData = jwt.verify(token, 'secret');
+            userData = jwt.verify(prevToken, 'secret');
         } catch (err) {
             return res
                 .status(401)
@@ -138,9 +156,9 @@ router.post('/verify', async (req, res) => {
                 );
                 return res
                     .cookie('token', newToken, {
-                        httpOnly: true,
                         secure: true,
                         sameSite: 'none',
+                        httpOnly: true,
                         maxAge: 10 * 60 * 60 * 1000, // 10 hours
                     })
                     .status(200)

@@ -75,6 +75,7 @@ const Users = sequelize.define(
             },
             validate: {
                 async isValidPhone(value) {
+                    if (!value) return; // <-- skip validation if value is null/undefined
                     const phone = parsePhoneNumber(value);
                     if (!phone?.isValid()) {
                         throw new Error('Invalid phone number');
