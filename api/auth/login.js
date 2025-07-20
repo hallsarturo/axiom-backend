@@ -47,14 +47,21 @@ router.post('/', async (req, res) => {
                 maxAge: 60 * 60 * 1000, // 1 hour
             })
                 .status(200)
-                .json({ user, message: 'Login successful' });
-        } else {
-            return res
-                .status(401)
                 .json({
-                    message:
-                        'This account does not support password login. Please use Google or set a password.',
+                    user: {
+                        id: user.id,
+                        username: user.username,
+                        email: user.email,
+                        mobilePhone: user.mobilePhone,
+                        isVerified: user.isVerified,
+                    },
+                    message: 'Login successful',
                 });
+        } else {
+            return res.status(401).json({
+                message:
+                    'This account does not support password login. Please use Google or set a password.',
+            });
         }
     }
 });

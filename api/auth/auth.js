@@ -20,9 +20,18 @@ opts.secretOrKey = 'secret';
 
 passport.use(
     new JwtStrategy(opts, async function (jwt_payload, done) {
-        const user = await db.users.findUserById(jwt_payload.id);
-        if (!user) return done(null, false);
-        return done(null, user);
+        try {
+            console.log('JWT payload:', jwt_payload); // Debug
+            const user = await db.users.findUserById({ id: jwt_payload.id });
+            if (!user) {
+                console.log('No user found for id:', jwt_payload.id); // Debug
+                return done(null, false);
+            }
+            return done(null, user);
+        } catch (err) {
+            console.error('JWT strategy error:', err);
+            return done(err, false);
+        }
     })
 );
 

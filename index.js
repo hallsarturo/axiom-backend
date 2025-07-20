@@ -39,15 +39,16 @@ if (dbConfig.use_env_variable) {
     );
 }
 (async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('Connection to PostgreSQL has been established successfully');
-  } catch (err) {
-    console.error('Unable to connect to PostgreSQL:', err);
-    process.exit(1); // Optionally exit if DB is not available
-  }
+    try {
+        await sequelize.authenticate();
+        console.log(
+            'Connection to PostgreSQL has been established successfully'
+        );
+    } catch (err) {
+        console.error('Unable to connect to PostgreSQL:', err);
+        process.exit(1); // Optionally exit if DB is not available
+    }
 })();
-
 
 // MIDDLEWARE
 // Logging:
@@ -93,6 +94,13 @@ app.use(
 // cookie Parser
 app.use(cookieParser());
 
+// PASSPORT-JWT
+let opts = {};
+opts.jwtFromRequest = (req) => req?.cookies?.token || null; // Extract token from cookie
+opts.secretOrKey = 'secret';
+// opts.issuer = 'accoaccounts.examplesoft.com';
+// opts.audience = 'yoursite.net';
+
 // helmet
 app.use(helmet());
 
@@ -107,6 +115,7 @@ app.get(
     '/api/profile',
     passport.authenticate('jwt', { session: false }),
     (req, res) => {
+        console.log('Cookies:', req.cookies); // Debug
         res.json({ user: req.user });
     }
 );
