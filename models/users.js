@@ -64,6 +64,11 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.STRING(255),
                 allowNull: true,
             },
+             isVerified: {
+                type: DataTypes.BOOLEAN,
+                allowNull: false,
+                defaultValue: false,
+            },
         },
         {
             timestamps: false,
@@ -76,6 +81,9 @@ export default (sequelize, DataTypes) => {
             db.AuthProviders.belongsTo(Users, { foreignKey: 'userId' });
         }
     };
+
+
+
 
     // Static/instance methods for DB interaction
     Users.findUserByUsername = async function (userData) {
@@ -157,6 +165,7 @@ export default (sequelize, DataTypes) => {
                 email: userData.email,
                 mobilePhone: userData.mobilePhone,
                 password: userData.password,
+                isVerified: false,
             });
             return user;
         } catch (err) {

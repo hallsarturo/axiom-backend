@@ -2,7 +2,8 @@ import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
 import { Strategy as JwtStrategy } from 'passport-jwt';
-
+import { Op } from 'sequelize';
+import bcrypt from 'bcrypt';
 import db from '../../models/index.js';
 import rateLimit from 'express-rate-limit';
 import { createVerification, verificationCheck } from '../../lib/twilio.js';
@@ -18,37 +19,91 @@ const signupLimiter = rateLimit({
     message: { error: 'Too many signup attempts, please try again later.' },
 });
 
+// PASSPORT-JWT
+let opts = {};
+opts.jwtFromRequest = (req) => req?.cookies?.token || null; // Extract token from cookie
+opts.secretOrKey = 'secret';
+// opts.issuer = 'accoaccounts.examplesoft.com';
+// opts.audience = 'yoursite.net';
+
 router.post('/', async (req, res) => {
     try {
         const userData = req.body;
         const mobilePhone = userData.mobilePhone;
         console.log('userData: ', userData);
 
-        // Validate unique fields
-        await db.users.validateUniqueFields(userData);
+        // Check if user already exists
+        const existingUser = await db.users.findOne({
+            where: {
+                [Op.or]: [
+                    { username: userData.username },
+                    { email: userData.email },
+                    { mobilePhone: userData.mobilePhone },
+                ],
+            },
+        });
 
-        // Send 2F sms verification code to client via Twilio
-        // await createVerification(mobilePhone);
+        if (existingUser) {
+            if (existingUser.isVerified) {
+                // Block signup, send error
+                throw new Error(
+                    'User already exists and is verified, try signin in.'
+                );
+            } else {
+                // User exists but not verified
+                // Optionally update user info here if needed
+                // Send verification code again
+                // Issue token for verification
+                const provisionalToken = jwt.sign(
+                    {
+                        id: existingUser.id,
+                        username: existingUser.username,
+                        email: existingUser.email,
+                        mobilePhone: existingUser.mobilePhone,
+                        verified: false,
+                    },
+                    'secret',
+                    { expiresIn: '15m' }
+                );
+                res.cookie('token', provisionalToken, {
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: 'none',
+                    maxAge: 10 * 60 * 60 * 1000,
+                })
+                    .status(200)
+                    .json({
+                        message:
+                            'Verification code sent again. Please enter the code to complete signUp.',
+                    });
+                return;
+            }
+        }
 
-        // Store in pending_signups
-        const provisionalUser = await db.pending_signups.createPendingUser(userData);
+        // Hash the password before creating the user
+        const hashedPassword = await bcrypt.hash(userData.password, 12);
+        userData.password = hashedPassword;
+
+        // If no user, create new user delete LOG in PRO
+        const newUser = await db.users.createUser(userData);
+        console.log('new user created in users: ', newUser);
 
         // Save Data to token
         // create JWT
-        const prevToken = jwt.sign(
+        const provisionalToken = jwt.sign(
             {
-                id: provisionalUser.id,
-                username: provisionalUser.username,
-                email: provisionalUser.email,
-                mobilePhone: provisionalUser.mobilePhone,
-                password: provisionalUser.password,
+                id: newUser.id,
+                username: newUser.username,
+                email: newUser.email,
+                mobilePhone: newUser.mobilePhone,
+                password: newUser.password,
                 verified: false,
             },
             'secret',
             { expiresIn: '15m' }
         );
-        console.log('created token: ', prevToken);
-        res.cookie('token', prevToken, {
+        console.log('created token: ', provisionalToken);
+        res.cookie('token', provisionalToken, {
             httpOnly: true,
             secure: true,
             sameSite: 'none',
@@ -66,20 +121,14 @@ router.post('/', async (req, res) => {
     }
 });
 
-// PASSPORT-JWT
-let opts = {};
-opts.jwtFromRequest = (req) => req?.cookies?.token || null; // Extract token from cookie
-opts.secretOrKey = 'secret';
-// opts.issuer = 'accoaccounts.examplesoft.com';
-// opts.audience = 'yoursite.net';
-
-passport.use(
-    new JwtStrategy(opts, async function (jwt_payload, done) {
-        const user = await db.users.findUserById(jwt_payload.id);
-        if (!user) return done(null, false);
-        return done(null, user);
-    })
-);
+// Delete this add it just once
+// passport.use(
+//     new JwtStrategy(opts, async function (jwt_payload, done) {
+//         const user = await db.users.findUserById(jwt_payload.id);
+//         if (!user) return done(null, false);
+//         return done(null, user);
+//     })
+// );
 
 router.post('/verify', async (req, res) => {
     try {
@@ -87,21 +136,16 @@ router.post('/verify', async (req, res) => {
 
         // Try to get token from Authorization header OR cookie
 
-        let prevToken = req.cookies.token;
-        // if (authHeader && authHeader.startsWith('Bearer ')) {
-        //     token = authHeader.split(' ')[1];
-        // } else if (req.cookies && req.cookies.token) {
-        //     token = req.cookies.token;
-        // }
+        let provisionalToken = req.cookies.token;
 
-        if (!prevToken) {
+        if (!provisionalToken) {
             return res.status(401).json({ error: 'No token provided.' });
         }
 
         // Verify and decode token
         let userData;
         try {
-            userData = jwt.verify(prevToken, 'secret');
+            userData = jwt.verify(provisionalToken, 'secret');
         } catch (err) {
             return res
                 .status(401)
@@ -118,11 +162,9 @@ router.post('/verify', async (req, res) => {
 
         console.log('Data: ', userData, ' otpCode: ', otpCode);
 
-        const pendingUser = await db.pending_signups.findPendingUserById(userData.id);
-        if (!pendingUser) {
-            return res
-                .status(400)
-                .json({ error: 'No pending signup found for this username' });
+        const user = await db.users.findUserById(userData);
+        if (!user) {
+            return res.status(400).json({ error: 'No user found in the db' });
         }
 
         // validate verification code with Twilio
@@ -134,22 +176,22 @@ router.post('/verify', async (req, res) => {
 
         switch (verificationResult.status) {
             case 'approved':
-                // Create new user
-                const newUser = await db.users.createUser(userData);
-                // Remove pending user
-                await db-pending_signups.removePendingUser(pendingUser);
+                // Verify user
+                user.isVerified = true;
+                await user.save();
+
                 // create JWT
-                const newToken = jwt.sign(
+                const verifiedToken = jwt.sign(
                     {
-                        id: newUser.id,
-                        username: newUser.username,
+                        id: user.id,
+                        username: user.username,
                         verified: true,
                     },
                     'secret',
                     { expiresIn: '10h' }
                 );
                 return res
-                    .cookie('token', newToken, {
+                    .cookie('token', verifiedToken, {
                         secure: true,
                         sameSite: 'none',
                         httpOnly: true,
@@ -157,7 +199,13 @@ router.post('/verify', async (req, res) => {
                     })
                     .status(200)
                     .json({
-                        user: newUser,
+                        user: {
+                            id: user.id,
+                            username: user.username,
+                            email: user.email,
+                            mobilePhone: user.mobilePhone,
+                            isVerified: user.isVerified,
+                        },
                         message: 'Signup complete',
                     });
             case 'pending':
