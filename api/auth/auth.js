@@ -19,21 +19,54 @@ opts.secretOrKey = 'secret';
 // opts.audience = 'yoursite.net';
 
 passport.use(
-    new JwtStrategy(opts, async function (jwt_payload, done) {
-        try {
-            console.log('JWT payload:', jwt_payload); // Debug
-            const user = await db.users.findUserById({ id: jwt_payload.id });
-            if (!user) {
-                console.log('No user found for id:', jwt_payload.id); // Debug
-                return done(null, false);
+    new JwtStrategy(
+        {
+            jwtFromRequest: ExtractJwt.fromExtractors([
+                ExtractJwt.fromAuthHeaderAsBearerToken(),
+                (req) => {
+                    let token = null;
+                    if (req && req.cookies) {
+                        token = req.cookies['token'];
+                    }
+                    return token;
+                },
+            ]),
+            secretOrKey: 'secret',
+        },
+        async (jwtPayload, done) => {
+            // Your verification logic
+            try {
+                console.log('JWT payload:', jwtPayload); // Debug
+                const user = await db.users.findUserById({ id: jwtPayload.id });
+                if (!user) {
+                    console.log('No user found for id:', jwtPayload.id); // Debug
+                    return done(null, false);
+                }
+                return done(null, user);
+            } catch (err) {
+                console.error('JWT strategy error:', err);
+                return done(err, false);
             }
-            return done(null, user);
-        } catch (err) {
-            console.error('JWT strategy error:', err);
-            return done(err, false);
         }
-    })
+    )
 );
+
+// passport.use(
+//     new JwtStrategy(opts, async function (jwt_payload, done) {
+//         try {
+//             console.log('JWT payload:', jwt_payload); // Debug
+//             const user = await db.users.findUserById({ id: jwt_payload.id });
+//             if (!user) {
+//                 console.log('No user found for id:', jwt_payload.id); // Debug
+//                 return done(null, false);
+//             }
+//             return done(null, user);
+//         } catch (err) {
+//             console.error('JWT strategy error:', err);
+//             return done(err, false);
+//         }
+//     })
+// );
 
 // GOOOGLE
 

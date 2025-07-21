@@ -13,6 +13,7 @@ import cookieParser from 'cookie-parser';
 import { router as loginRouter } from './api/auth/login.js';
 import { router as signupRouter } from './api/auth/signup.js';
 import { router as authRouter } from './api/auth/auth.js';
+import { router as userProfileRouter } from './api/user/user-profile.js';
 import Sequelize from 'sequelize';
 import helmet from 'helmet';
 import './api/auth/auth.js';
@@ -110,15 +111,19 @@ app.use(helmet());
 app.use('/api/login', loginRouter);
 app.use('/api/signup', signupRouter);
 app.use('/api/auth', authRouter);
-//app.get('/user', userRouter);
 app.get(
-    '/api/profile',
-    passport.authenticate('jwt', { session: false }),
-    (req, res) => {
-        console.log('Cookies:', req.cookies); // Debug
-        res.json({ user: req.user });
-    }
+    '/api/user',
+    // passport.authenticate('jwt', { session: false }),
+    userProfileRouter
 );
+// app.get(
+//     '/api/profile',
+//     passport.authenticate('jwt', { session: false }),
+//     (req, res) => {
+//         console.log('Cookies:', req.cookies); // Debug
+//         res.status(200).json({ user: req.user });
+//     }
+// );
 app.post('/api/logout', function (req, res, next) {
     res.clearCookie('token', {
         httpOnly: true,

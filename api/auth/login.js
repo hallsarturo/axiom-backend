@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-
 import db from '../../models/index.js';
 
 const router = Router();
@@ -11,7 +10,6 @@ router.post('/', async (req, res) => {
     const user = await db.users.findUserByUsername({ username, password });
 
     if (user === 0) {
-        // No user found. Redirect to Signup
         return res
             .status(401)
             .json({ message: `no username '${username}' found.` });
@@ -36,18 +34,30 @@ router.post('/', async (req, res) => {
                 'secret',
                 { expiresIn: '1h' }
             );
-            if (process.env.NODE_ENV !== 'production') {
-                console.log('Token: ', token);
-            }
-            // Set JWT as httpOnly cookie
-            res.cookie('token', token, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'none',
-                maxAge: 60 * 60 * 1000, // 1 hour
-            })
-                .status(200)
-                .json({
+            if (process.env.NODE_ENV === 'production') {
+                // Send JWT as httpOnly cookie in production
+                res.cookie('token', token, {
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: 'none',
+                    path: '/',
+                    maxAge: 60 * 60 * 1000, // 1 hour
+                })
+                    .status(200)
+                    .json({
+                        user: {
+                            id: user.id,
+                            username: user.username,
+                            email: user.email,
+                            mobilePhone: user.mobilePhone,
+                            isVerified: user.isVerified,
+                        },
+                        message: 'Login successful',
+                    });
+            } else {
+                // Send JWT in response body in development
+                res.status(200).json({
+                    token,
                     user: {
                         id: user.id,
                         username: user.username,
@@ -57,6 +67,7 @@ router.post('/', async (req, res) => {
                     },
                     message: 'Login successful',
                 });
+            }
         } else {
             return res.status(401).json({
                 message:
