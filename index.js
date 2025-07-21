@@ -120,12 +120,12 @@ app.get(
     }
 );
 app.post('/api/logout', function (req, res, next) {
-    req.logout(function (err) {
-        if (err) {
-            return next(err);
-        }
-        res.redirect('/');
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
     });
+    res.status(200).json({ message: 'Logout successful' });
 });
 //
 

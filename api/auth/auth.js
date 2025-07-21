@@ -70,7 +70,7 @@ passport.use(
 
                 if (!user) {
                     // create user in Users table
-                    user = await createUser({
+                    user = await db.users.createUser({
                         username: profile.displayName
                             .replace(/\s+/g, '')
                             .toLowerCase(),
@@ -123,12 +123,15 @@ router.get(
         failureRedirect: `${process.env.FRONTEND_URL}/`,
     }),
     async function (req, res) {
+        // Update isVerified to true
+        await db.users.setVerified(req.user.id);
+
         // create JWT
         const token = jwt.sign(
             {
                 id: req.user.id,
                 username: req.user.username,
-                verified: true,
+                isVerified: true,
             },
             'secret',
             { expiresIn: '10h' }

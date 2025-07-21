@@ -64,7 +64,7 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.STRING(255),
                 allowNull: true,
             },
-             isVerified: {
+            isVerified: {
                 type: DataTypes.BOOLEAN,
                 allowNull: false,
                 defaultValue: false,
@@ -81,9 +81,6 @@ export default (sequelize, DataTypes) => {
             db.AuthProviders.belongsTo(Users, { foreignKey: 'userId' });
         }
     };
-
-
-
 
     // Static/instance methods for DB interaction
     Users.findUserByUsername = async function (userData) {
@@ -181,6 +178,19 @@ export default (sequelize, DataTypes) => {
                 console.error('Error creating user:', err);
                 throw new Error('An unexpected error occurred.');
             }
+        }
+    };
+
+    Users.setVerified = async function (userId) {
+        try {
+            const user = await Users.findByPk(userId);
+            if (!user) return null;
+            user.isVerified = true;
+            await user.save();
+            return user;
+        } catch (err) {
+            console.error('Error updating user verification:', err);
+            throw err;
         }
     };
 
