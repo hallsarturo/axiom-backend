@@ -51,29 +51,22 @@ passport.use(
     )
 );
 
-// passport.use(
-//     new JwtStrategy(opts, async function (jwt_payload, done) {
-//         try {
-//             console.log('JWT payload:', jwt_payload); // Debug
-//             const user = await db.users.findUserById({ id: jwt_payload.id });
-//             if (!user) {
-//                 console.log('No user found for id:', jwt_payload.id); // Debug
-//                 return done(null, false);
-//             }
-//             return done(null, user);
-//         } catch (err) {
-//             console.error('JWT strategy error:', err);
-//             return done(err, false);
-//         }
-//     })
-// );
-
 // GOOOGLE
 
 router.get(
     '/google',
-    passport.authenticate('google', { scope: ['profile', 'email'] })
+    passport.authenticate('google', {
+        scope: [
+            'https://www.googleapis.com/auth/userinfo.profile',
+            'https://www.googleapis.com/auth/userinfo.email',
+        ],
+        prompt: 'select_account',
+    })
 );
+// router.get(
+//     '/google',
+//     passport.authenticate('google', { scope: ['profile', 'email'] })
+// );
 
 passport.use(
     new GoogleStrategy(
@@ -133,7 +126,6 @@ passport.use(
         }
     )
 );
-
 
 // redirect
 router.get(
