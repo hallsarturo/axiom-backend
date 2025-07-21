@@ -95,6 +95,24 @@ app.use(
 // cookie Parser
 app.use(cookieParser());
 
+app.use(passport.initialize());
+// Serialize user to session (store user id)
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+
+// Deserialize user from session (fetch user by id)
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await db.users.findUserById({ id });
+        done(null, user);
+    } catch (err) {
+        done(err, null);
+    }
+});
+
+//app.use(passport.session());
+
 // PASSPORT-JWT
 let opts = {};
 opts.jwtFromRequest = (req) => req?.cookies?.token || null; // Extract token from cookie
@@ -125,12 +143,25 @@ app.get(
 //     }
 // );
 app.post('/api/logout', function (req, res, next) {
-    res.clearCookie('token', {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'none',
+    req.logout(function (err) {
+        if (err) {
+            return next(err);
+        }
+        res.clearCookie('token', {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+        });
+        req.session.destroy((err) => {
+            if (err) {
+                return res
+                    .status(500)
+                    .json({ message: 'Error destroying session' });
+            }
+            res.clearCookie('connect.sid');
+            res.status(200).json({ message: 'Logout successful' });
+        });
     });
-    res.status(200).json({ message: 'Logout successful' });
 });
 //
 

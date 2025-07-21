@@ -19,9 +19,9 @@ router.use('/', async (req, res) => {
         const authHeader = req.headers.authorization;
         if (authHeader && authHeader.startsWith('Bearer ')) {
             token = authHeader.replace('Bearer ', '');
-            console.log('token: ', token)
+            console.log('token: ', token);
         } else {
-            console.log('entered cookies ')
+            console.log('entered cookies ');
             token = req.cookies.token; // fallback if sent as cookie
         }
     }
@@ -44,7 +44,23 @@ router.use('/', async (req, res) => {
         return res.status(404).json({ error: 'User not found' });
     }
 
-    res.status(200).json({ username: user.username });
+    // Check if user exists in auth_providers
+    const provider = await db.auth_providers.findOne({
+        where: { userId: user.id },
+    });
+
+    let responseUser = {
+        username: user.username,
+    };
+
+    if (provider) {
+        responseUser.displayName = provider.displayName;
+        responseUser.photoUrl = provider.photoUrl;
+        // Replace username with displayName if available
+        responseUser.username = provider.displayName || user.username;
+    }
+
+    res.status(200).json({ user: responseUser });
 });
 
 export { router };

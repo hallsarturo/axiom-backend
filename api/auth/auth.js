@@ -134,20 +134,6 @@ passport.use(
     )
 );
 
-// Serialize user to session (store user id)
-passport.serializeUser((user, done) => {
-    done(null, user.id);
-});
-
-// Deserialize user from session (fetch user by id)
-passport.deserializeUser(async (id, done) => {
-    try {
-        const user = await db.users.findUserById({ id });
-        done(null, user);
-    } catch (err) {
-        done(err, null);
-    }
-});
 
 // redirect
 router.get(
