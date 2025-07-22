@@ -15,7 +15,7 @@ export default (sequelize, DataTypes) => {
   });
 
   Categories.associate = (db) => {
-    Categories.hasMany(db.subcategories, { foreignKey: 'categoryId' });
+   
   };
 
   return Categories;

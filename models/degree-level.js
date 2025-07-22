@@ -32,3 +32,6 @@ export default (sequelize, DataTypes) => {
 
     return DegreeLevel;
 };
+
+// helper funcitons
+

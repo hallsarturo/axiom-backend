@@ -14,6 +14,7 @@ import { router as loginRouter } from './api/auth/login.js';
 import { router as signupRouter } from './api/auth/signup.js';
 import { router as authRouter } from './api/auth/auth.js';
 import { router as userProfileRouter } from './api/user/user-profile.js';
+import { router as dashboardRouter } from './api/dashboard/dashboard.js';
 import Sequelize from 'sequelize';
 import helmet from 'helmet';
 import './api/auth/auth.js';
@@ -129,6 +130,7 @@ app.use(helmet());
 app.use('/api/login', loginRouter);
 app.use('/api/signup', signupRouter);
 app.use('/api/auth', authRouter);
+app.get('/api/dashboard', dashboardRouter);
 app.get(
     '/api/user',
     passport.authenticate('jwt', { session: false }),
