@@ -1,7 +1,6 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { Sequelize, DataTypes } from 'sequelize';
 import parsePhoneNumber from 'libphonenumber-js';
 import bcrypt from 'bcrypt';
 
