@@ -40,6 +40,7 @@ router.use('/', async (req, res) => {
 
     // Find user by id
     const user = await db.users.findUserById({ id: payload.id });
+    console.log('user: ', user)
     if (!user) {
         return res.status(404).json({ error: 'User not found' });
     }
@@ -59,7 +60,7 @@ router.use('/', async (req, res) => {
         // Replace username with displayName if available
         responseUser.username = provider.displayName || user.username;
     }
-
+    console.log('responseUSer: ', responseUser)
     res.status(200).json({ user: responseUser });
 });
 

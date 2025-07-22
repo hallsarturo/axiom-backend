@@ -59,6 +59,8 @@ router.get(
         scope: [
             'https://www.googleapis.com/auth/userinfo.profile',
             'https://www.googleapis.com/auth/userinfo.email',
+            'profile',
+            'email',
         ],
         prompt: 'select_account',
     })
@@ -148,13 +150,21 @@ router.get(
             { expiresIn: '10h' }
         );
 
-        // Set JWT as httpOnly cookie and redirect
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: true, // always true for HTTPS dev/prod
-            sameSite: 'none', // required for cross-origin cookies
-            maxAge: 10 * 60 * 60 * 1000, // 10 hours
-        }).redirect(`${process.env.FRONTEND_URL}/auth/success`);
+        if (process.env.NODE_ENV === 'production') {
+            // Set JWT as httpOnly cookie and redirect
+            console.log('entered production');
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'none',
+                maxAge: 10 * 60 * 60 * 1000, // 10 hours
+            }).redirect(`${process.env.FRONTEND_URL}/auth/success`);
+        } else {
+            // Send JWT in response body for localStorage save in dev
+            res.redirect(
+                `${process.env.FRONTEND_URL}/auth/success?token=${token}`
+            );
+        }
     }
 );
 

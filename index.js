@@ -131,7 +131,7 @@ app.use('/api/signup', signupRouter);
 app.use('/api/auth', authRouter);
 app.get(
     '/api/user',
-    // passport.authenticate('jwt', { session: false }),
+    passport.authenticate('jwt', { session: false }),
     userProfileRouter
 );
 // app.get(
