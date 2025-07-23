@@ -1,0 +1,119 @@
+[
+    {
+        "header": {
+            "identifier": "oai:philarchive.org/rec/VUOCSA",
+            "datestamp": "2025-06-18T00:51:37Z"
+        },
+        "metadata": {
+            "oai_dc:dc": {
+                "$": {
+                    "xsi:schemaLocation": "http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd"
+                },
+                "dc:title": "Coordinated school and family environmental education efforts for a generation of eco-surplus culture",
+                "dc:type": "info:eu-repo/semantics/article",
+                "dc:creator": [
+                    "Vuong, Quan-Hoang",
+                    "Duong, Minh-Phuong Thi",
+                    "La, Viet-Phuong",
+                    "Li, Dan",
+                    "Nguyen, Minh-Hoang"
+                ],
+                "dc:subject": "Philosophy",
+                "dc:date": "manuscript",
+                "dc:identifier": "https://philarchive.org/rec/VUOCSA",
+                "dc:language": "en",
+                "dc:description": "Climate change and environmental degradation are threatening the existence of humanity. The youth have the potential and capability to play a pivotal role in tackling these challenges. Therefore, the current study aims to examine how school and family environmental education can enhance environmental knowledge, willingness to take action, and pro-environmental behaviors among children and young people. The Bayesian Mindsponge Framework (BMF) analytics was utilized on a nationally representative dataset of 2069 Vietnamese primary, secondary, and high school students. The analysis results suggest that school and family environmental education is beneficial for improving students’ environmental knowledge and willingness to take environmental actions. Notably, the effect of school education is more substantial for cultivating environmental knowledge, whereas family education has a stronger impact on raising students’ willingness than school education. Students with higher levels of environmental knowledge are more likely to conduct pro-environmental behaviors only when they are willing to take environmental actions. If students are unwilling to act, higher environmental knowledge is negatively associated with the likelihood of pro-environmental behavior. Following these findings, we call for coordinated education efforts of schools and families to cultivate students’ eco-surplus culture. The education efforts should be implemented along with exposing students to environmental settings and encouraging them to read environmental books."
+            }
+        },
+        "about": {
+            "rights": {
+                "$": {
+                    "xmlns": "http://www.openarchives.org/OAI/2.0/rights/",
+                    "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+                    "xsi:schemaLocation": "http://www.openarchives.org/OAI/2.0/rights/ http://www.openarchives.org/OAI/2.0/rights.xsd"
+                },
+                "rightsReference": {
+                    "_": "https://philpapers.org/help/terms.html",
+                    "$": {
+                        "xmlns": ""
+                    }
+                }
+            }
+        }
+    },
+    {
+        "header": {
+            "identifier": "oai:philarchive.org/rec/PENPOA-3",
+            "datestamp": "2025-06-18T01:28:41Z"
+        },
+        "metadata": {
+            "oai_dc:dc": {
+                "$": {
+                    "xsi:schemaLocation": "http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd"
+                },
+                "dc:title": "Political Orientations and the Dilemma in the Yangming School",
+                "dc:type": "info:eu-repo/semantics/article",
+                "dc:creator": "Peng, Guoxiang",
+                "dc:subject": "Philosophy",
+                "dc:date": "2022",
+                "dc:identifier": "https://philarchive.org/rec/PENPOA-3",
+                "dc:language": "en",
+                "dc:description": "There were various dimensions to Yangmingxue 陽明學, or the Yangming school,\n          as defined not only by Wang Yangming 王陽明 himself but also by his students\n          and followers in the mid-late Ming dynasty. This article will treat Yangmingxue\n          as a whole from the perspective of political culture. It will explore two political\n          orientations in Wang Yangming school, namely dejunxingdao 得君行道 (“carrying\n          out the Way through the support of the emperor”) and jueminxingdao 覺民行道\n          (“carrying out the Way by enlightening the common people”), analyze the implications of these two orientations and scrutinize their relationship. Also it will\n          examine and evaluate the concept of the “common people as political subjects”\n          implied in Yangmingxue and the political ideal in the Confucian tradition. The\n          core questions that will be discussed are: First, how should we understand\n          the political orientation, jueminxingdao, pioneered by the Yangming school, in\n          addition to dejunxingdao? Second, how should we understand the relationship\n          between jueminxingdao and dejunxingdao in the Yangming school? Third, how\n          should we understand the concept of the “common people as political subjects”\n          implied in Yangmingxue and what is the dilemma it had to face? Last, why the\n          Confucian political subject could not be established and how to establish it."
+            }
+        },
+        "about": {
+            "rights": {
+                "$": {
+                    "xmlns": "http://www.openarchives.org/OAI/2.0/rights/",
+                    "xsi:schemaLocation": "http://www.openarchives.org/OAI/2.0/rights/ http://www.openarchives.org/OAI/2.0/rights.xsd",
+                    "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance"
+                },
+                "rightsReference": {
+                    "_": "https://philpapers.org/help/terms.html",
+                    "$": {
+                        "xmlns": ""
+                    }
+                }
+            }
+        }
+    },
+    {
+        "header": {
+            "identifier": "oai:philarchive.org/rec/IZITBO",
+            "datestamp": "2025-06-18T01:51:56Z"
+        },
+        "metadata": {
+            "oai_dc:dc": {
+                "$": {
+                    "xsi:schemaLocation": "http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd"
+                },
+                "dc:title": "The Basics of Logic",
+                "dc:type": "info:eu-repo/semantics/book",
+                "dc:creator": [
+                    "Izibili, Matthew Aziegbemhin",
+                    "Polo, Etaoghene Paul"
+                ],
+                "dc:subject": "Philosophy",
+                "dc:date": "2018",
+                "dc:identifier": "https://philarchive.org/rec/IZITBO",
+                "dc:language": "en",
+                "dc:description": "This chapter attempts to establish an understanding of the concept of logic. Since there is no unanimous definition of logic, we shall consider some definitions which will facilitate our development of a working definition. This will be followed by a historical trajectory of logic as a discipline, and thereafter, an exposition of the scope and subject matter of logic, as well as the laws of thought shall be given. The aspects or divisions of logic shall also be examined here-in. This chapter shall also include an overview of arguments in logic. This will be done by means of some definitions which will facilitate an understanding of the concept of argument. Since arguments are constituted by sentences which are called propositions, a distinction shall be made between sentences in the ordinary sense and in the propositional sense. This will be followed by a quick glance at the components of arguments. Inference, a term which denotes the relationship between the components of arguments, namely, premises and conclusions, shall also be considered. Also to be discussed in this chapter are: types and kinds of arguments, some instantiations of arguments, truth-value of propositions, validity and invalidity of arguments as well as sound and unsound arguments. A briefing on the usefulness of arguments to man shall also be given in this chapter. The end-point of this chapter shall be a discourse on the relevance or value of logic as it applies to our daily living."
+            }
+        },
+        "about": {
+            "rights": {
+                "$": {
+                    "xmlns": "http://www.openarchives.org/OAI/2.0/rights/",
+                    "xsi:schemaLocation": "http://www.openarchives.org/OAI/2.0/rights/ http://www.openarchives.org/OAI/2.0/rights.xsd",
+                    "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance"
+                },
+                "rightsReference": {
+                    "_": "https://philpapers.org/help/terms.html",
+                    "$": {
+                        "xmlns": ""
+                    }
+                }
+            }
+        }
+    }
+]
