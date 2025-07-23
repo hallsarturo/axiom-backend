@@ -5,6 +5,30 @@ import db from '../../models/index.js';
 
 const router = Router();
 
+/**
+ * @swagger
+ * /api/login:
+ *   post:
+ *     summary: User login
+ *     description: Authenticates a user and returns a JWT token.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       401:
+ *         description: Unauthorized
+ */
+
 router.post('/', async (req, res) => {
     const { username, password } = req.body;
     const user = await db.users.findUserByUsername({ username, password });

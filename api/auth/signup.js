@@ -26,6 +26,34 @@ opts.secretOrKey = 'secret';
 // opts.issuer = 'accoaccounts.examplesoft.com';
 // opts.audience = 'yoursite.net';
 
+/**
+ * @swagger
+ * /api/auth/signup:
+ *   post:
+ *     summary: User signup
+ *     description: Registers a new user and sends a verification code.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               mobilePhone:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Verification code sent to SMS.
+ *       400:
+ *         description: Signup error
+ */
+
 router.post('/', async (req, res) => {
     try {
         const userData = req.body;
@@ -121,14 +149,27 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Delete this add it just once
-// passport.use(
-//     new JwtStrategy(opts, async function (jwt_payload, done) {
-//         const user = await db.users.findUserById(jwt_payload.id);
-//         if (!user) return done(null, false);
-//         return done(null, user);
-//     })
-// );
+/**
+ * @swagger
+ * /api/auth/signup/verify:
+ *   post:
+ *     summary: Verify signup OTP
+ *     description: Verifies the OTP code sent to the user's phone and completes signup.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               otpSignup:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Signup complete
+ *       400:
+ *         description: Verification error
+ */
 
 router.post('/verify', async (req, res) => {
     try {

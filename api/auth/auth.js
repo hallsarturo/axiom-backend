@@ -51,8 +51,18 @@ passport.use(
     )
 );
 
-// GOOOGLE
+/**
+ * @swagger
+ * /api/auth/google:
+ *   get:
+ *     summary: Google OAuth login
+ *     description: Redirects user to Google for authentication.
+ *     responses:
+ *       302:
+ *         description: Redirect to Google OAuth
+ */
 
+// GOOOGLE
 router.get(
     '/google',
     passport.authenticate('google', {
@@ -128,6 +138,19 @@ passport.use(
         }
     )
 );
+
+/**
+ * @swagger
+ * /api/auth/google/callback:
+ *   get:
+ *     summary: Google OAuth callback
+ *     description: Handles Google OAuth callback, creates user if needed, and issues JWT.
+ *     responses:
+ *       302:
+ *         description: Redirect to frontend with JWT (in cookie or query param)
+ *       401:
+ *         description: Authentication failed
+ */
 
 // redirect
 router.get(

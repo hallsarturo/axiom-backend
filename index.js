@@ -19,6 +19,8 @@ import Sequelize from 'sequelize';
 import helmet from 'helmet';
 import './api/auth/auth.js';
 import config from './config/config.js';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './swagger.js';
 
 dotenv.config();
 const app = express();
@@ -124,7 +126,10 @@ opts.secretOrKey = 'secret';
 // helmet
 app.use(helmet());
 
-// end Middleware
+// Swagger docs
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// END Middleware
 
 // ROUTES
 app.use('/api/login', loginRouter);
