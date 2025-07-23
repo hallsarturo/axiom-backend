@@ -4,6 +4,37 @@ import db from '../../models/index.js';
 
 const router = Router();
 
+/**
+ * @swagger
+ * /api/user:
+ *   get:
+ *     summary: Get user profile
+ *     description: Returns the authenticated user's profile, including displayName and photoUrl if available.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     username:
+ *                       type: string
+ *                     displayName:
+ *                       type: string
+ *                     photoUrl:
+ *                       type: string
+ *       401:
+ *         description: Unauthorized or invalid token
+ *       404:
+ *         description: User not found
+ */
+
 router.use('/', async (req, res) => {
     // logging debug
     console.log('Headers:', req.headers);
@@ -40,7 +71,7 @@ router.use('/', async (req, res) => {
 
     // Find user by id
     const user = await db.users.findUserById({ id: payload.id });
-    console.log('user: ', user)
+    console.log('user: ', user);
     if (!user) {
         return res.status(404).json({ error: 'User not found' });
     }
@@ -60,7 +91,7 @@ router.use('/', async (req, res) => {
         // Replace username with displayName if available
         responseUser.username = provider.displayName || user.username;
     }
-    console.log('responseUSer: ', responseUser)
+    console.log('responseUSer: ', responseUser);
     res.status(200).json({ user: responseUser });
 });
 

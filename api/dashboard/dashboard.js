@@ -3,6 +3,50 @@ import db from '../../models/index.js';
 
 const router = Router();
 
+/**
+ * @swagger
+ * /api/dashboard:
+ *   get:
+ *     summary: Get dashboard configuration options
+ *     description: Returns all available degree levels and subjects for user dashboard configuration.
+ *     responses:
+ *       200:
+ *         description: List of degree levels and subjects
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 degreeLevels:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       imgSrc:
+ *                         type: string
+ *                       imgAlt:
+ *                         type: string
+ *                 subjects:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       imgSrc:
+ *                         type: string
+ *                       imgAlt:
+ *                         type: string
+ *       500:
+ *         description: Couldn't retrieve dashboard info
+ */
+
 router.use('/', async (req, res) => {
     try {
         // get all elements from degree-level table
