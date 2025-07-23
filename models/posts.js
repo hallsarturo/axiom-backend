@@ -67,9 +67,37 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.INTEGER,
                 defaultValue: 0,
             },
+            identifier: {
+                type: DataTypes.STRING,
+                allowNull: true,
+            },
+            author: {
+                type: DataTypes.STRING,
+                allowNull: true,
+            },
+            subject: {
+                type: DataTypes.STRING,
+                allowNull: true,
+            },
         },
         {
             timestamps: true,
+            validate: {
+                identifierAndAuthorRequiredForPaper() {
+                    if (this.type === 'paper') {
+                        if (!this.identifier) {
+                            throw new Error(
+                                'identifier is required for paper posts'
+                            );
+                        }
+                        if (!this.author) {
+                            throw new Error(
+                                'author is required for paper posts'
+                            );
+                        }
+                    }
+                },
+            },
         }
     );
 

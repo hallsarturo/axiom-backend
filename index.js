@@ -15,6 +15,7 @@ import { router as signupRouter } from './api/auth/signup.js';
 import { router as authRouter } from './api/auth/auth.js';
 import { router as userProfileRouter } from './api/user/user-profile.js';
 import { router as dashboardRouter } from './api/dashboard/dashboard.js';
+import { router as postsRouter } from './api/posts/posts.js';
 import Sequelize from 'sequelize';
 import helmet from 'helmet';
 import './api/auth/auth.js';
@@ -141,6 +142,7 @@ app.get(
     passport.authenticate('jwt', { session: false }),
     userProfileRouter
 );
+app.use('/api/posts', postsRouter);
 // app.get(
 //     '/api/profile',
 //     passport.authenticate('jwt', { session: false }),
