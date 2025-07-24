@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
-    const PostLike = sequelize.define(
-        'post_likes',
+    const PostComment = sequelize.define(
+        'post_comments',
         {
             id: {
                 type: DataTypes.INTEGER,
@@ -9,16 +9,7 @@ export default (sequelize, DataTypes) => {
             },
             postId: { type: DataTypes.INTEGER, allowNull: false },
             userId: { type: DataTypes.INTEGER, allowNull: false },
-            type: {
-                type: DataTypes.ENUM(
-                    'like',
-                    'dislike',
-                    'interesting',
-                    'not_interesting',
-                    'bookmark'
-                ),
-                allowNull: false,
-            },
+            content: { type: DataTypes.TEXT, allowNull: false },
             createdAt: {
                 type: DataTypes.DATE,
                 allowNull: false,
@@ -28,10 +19,10 @@ export default (sequelize, DataTypes) => {
         { timestamps: false }
     );
 
-    PostLike.associate = (db) => {
-        PostLike.belongsTo(db.posts, { foreignKey: 'postId' });
-        PostLike.belongsTo(db.users, { foreignKey: 'userId' });
+    PostComment.associate = (db) => {
+        PostComment.belongsTo(db.posts, { foreignKey: 'postId' });
+        PostComment.belongsTo(db.users, { foreignKey: 'userId' });
     };
 
-    return PostLike;
+    return PostComment;
 };
