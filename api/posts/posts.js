@@ -122,16 +122,16 @@ router.get('/papers', async (req, res) => {
         const postsWithStats = await Promise.all(
             paperPosts.map(async (post) => {
                 const likes = await db.post_reactions.count({
-                    where: { postId: post.id, type: 'like' },
+                    where: { postId: post.id, reaction: 'like' },
                 });
                 const dislikes = await db.post_reactions.count({
-                    where: { postId: post.id, type: 'dislike' },
+                    where: { postId: post.id, reaction: 'dislike' },
                 });
                 const laughs = await db.post_reactions.count({
-                    where: { postId: post.id, type: 'laugh' },
+                    where: { postId: post.id, reaction: 'laugh' },
                 });
                 const angers = await db.post_reactions.count({
-                    where: { postId: post.id, type: 'anger' },
+                    where: { postId: post.id, reaction: 'anger' },
                 });
                 const comments = await db.post_comments.count({
                     where: { postId: post.id },
@@ -157,7 +157,7 @@ router.get('/papers', async (req, res) => {
             })
         );
 
-        res.status(200).json({ posts: postsWithStats });
+        res.status(200).json({ paperPosts: postsWithStats });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Could not fetch posts' });

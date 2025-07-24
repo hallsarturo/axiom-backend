@@ -27,7 +27,7 @@ dotenv.config();
 const app = express();
 const port = 4000;
 const securePort = 4010;
-const _log_dirname = '/Users/proal-mac/Code/node/axiom-backend/';
+const _log_dirname = '/Users/proal-mac/Code/AxiomLabs/Axiom/back/axiom-backend/';
 
 // Test db connection
 const env = process.env.NODE_ENV || 'development';
@@ -58,7 +58,7 @@ if (dbConfig.use_env_variable) {
 // MIDDLEWARE
 // Logging:
 const accessLogStream = fs.createWriteStream(
-    path.join(_log_dirname, 'access.log'),
+    path.join(process.cwd(), 'access.log'),
     { flags: 'a' }
 );
 app.use(morgan('combined', { stream: accessLogStream }));
