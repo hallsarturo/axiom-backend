@@ -79,7 +79,7 @@ app.use(
     cors({
         origin: process.env.FRONTEND_URL,
         credentials: true,
-        methods: ['GET', 'POST'],
+        methods: ['GET', 'POST', 'PUT'],
         allowedHeaders: ['Content-Type', 'Authorization'],
     })
 );
@@ -144,7 +144,7 @@ app.get(
     userProfileRouter
 );
 app.use(
-    '/api/posts', passport.authenticate('jwt', { session: false }), postsRouter
+    '/api/posts', postsRouter
 );
 // app.get(
 //     '/api/profile',

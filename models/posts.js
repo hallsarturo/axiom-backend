@@ -59,6 +59,14 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.INTEGER,
                 defaultValue: 0,
             },
+            laughsCount: {
+                type: DataTypes.INTEGER,
+                defaultValue: 0,
+            },
+            angersCount: {
+                type: DataTypes.INTEGER,
+                defaultValue: 0,
+            },
             commentsCount: {
                 type: DataTypes.INTEGER,
                 defaultValue: 0,

@@ -25,6 +25,8 @@ const router = Router();
  *                   properties:
  *                     username:
  *                       type: string
+ *                     id:
+ *                       type: integer    
  *                     displayName:
  *                       type: string
  *                     photoUrl:
@@ -84,6 +86,7 @@ router.use('/', async (req, res) => {
 
     let responseUser = {
         username: user.username,
+        id: user.id,
     };
 
     if (provider) {
