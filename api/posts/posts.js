@@ -8,7 +8,9 @@ const router = Router();
  * /api/posts/papers:
  *   get:
  *     summary: Get all paper posts
- *     description: Returns all posts of type 'paper' from the posts table, including counts for likes, dislikes, laughs, angers, total reactions, comments, and shares.
+ *     description: Retrieve all posts of type 'paper' with reaction and engagement statistics. Requires authentication.
+ *     security:
+ *       - cookieAuth: []
  *     responses:
  *       200:
  *         description: List of paper posts with stats
@@ -17,7 +19,7 @@ const router = Router();
  *             schema:
  *               type: object
  *               properties:
- *                 posts:
+ *                 paperPosts:
  *                   type: array
  *                   items:
  *                     type: object
@@ -57,55 +59,8 @@ const router = Router();
  *                         type: integer
  *                       shares:
  *                         type: integer
- *       500:
- *         description: Could not
- * @swagger
- * /api/posts/papers:
- *   get:
- *     summary: Get all paper posts
- *     description: Returns all posts of type 'paper' from the posts table, including likes, dislikes, comments, and shares counts.
- *     responses:
- *       200:
- *         description: List of paper posts with stats
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 posts:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                       title:
- *                         type: string
- *                       description:
- *                         type: string
- *                       abstract:
- *                         type: string
- *                       content:
- *                         type: string
- *                       image:
- *                         type: string
- *                       identifier:
- *                         type: string
- *                       author:
- *                         type: string
- *                       subject:
- *                         type: string
- *                       publishedAt:
- *                         type: string
- *                         format: date-time
- *                       likes:
- *                         type: integer
- *                       dislikes:
- *                         type: integer
- *                       comments:
- *                         type: integer
- *                       shares:
- *                         type: integer
+ *       401:
+ *         description: Unauthorized - JWT required
  *       500:
  *         description: Could not fetch posts
  */

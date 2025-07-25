@@ -137,7 +137,7 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/login', loginRouter);
 app.use('/api/signup', signupRouter);
 app.use('/api/auth', authRouter);
-app.get('/api/dashboard', dashboardRouter);
+app.get('/api/dashboard', passport.authenticate('jwt', { session: false }), dashboardRouter);
 app.get(
     '/api/user',
     passport.authenticate('jwt', { session: false }),

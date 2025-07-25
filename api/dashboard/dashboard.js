@@ -8,7 +8,9 @@ const router = Router();
  * /api/dashboard:
  *   get:
  *     summary: Get dashboard configuration options
- *     description: Returns all available degree levels and subjects for user dashboard configuration.
+ *     description: Returns all available degree levels and subjects for user dashboard configuration. Requires authentication.
+ *     security:
+ *       - cookieAuth: []
  *     responses:
  *       200:
  *         description: List of degree levels and subjects
@@ -43,6 +45,8 @@ const router = Router();
  *                         type: string
  *                       imgAlt:
  *                         type: string
+ *       401:
+ *         description: Unauthorized - JWT required
  *       500:
  *         description: Couldn't retrieve dashboard info
  */
