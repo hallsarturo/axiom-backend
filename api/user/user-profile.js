@@ -41,6 +41,7 @@ router.use('/', async (req, res) => {
     console.log('Cookies:', req.cookies);
     console.log('Body:', req.body);
 
+    // Check user authorization
     let token;
     if (process.env.NODE_ENV === 'production') {
         // In production, extract token from cookie

@@ -164,4 +164,39 @@ router.get('/papers', async (req, res) => {
     }
 });
 
+router.put('/:postId/reaction', async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const { reaction } = req.body;
+        const userId = req.user?.id; // Assumes user is authenticated and userId is available
+
+        if (!userId) {
+            return res.status(401).json({ error: 'User not authenticated' });
+        }
+
+        if (!['like', 'dislike', 'laugh', 'anger'].includes(reaction)) {
+            return res.status(400).json({ error: 'Invalid reaction type' });
+        }
+
+        // Check if a reaction by this user for this post already exists
+        const existingReaction = await db.post_reactions.findOne({
+            where: { postId, userId },
+        });
+
+        if (existingReaction) {
+            // Update the reaction type
+            existingReaction.reaction = reaction;
+            await existingReaction.save();
+            return res.status(200).json({ message: 'Reaction updated' });
+        } else {
+            // Create a new reaction
+            await db.post_reactions.create({ postId, userId, reaction });
+            return res.status(201).json({ message: 'Reaction added' });
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not update reaction' });
+    }
+});
+
 export { router };

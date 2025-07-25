@@ -27,7 +27,8 @@ dotenv.config();
 const app = express();
 const port = 4000;
 const securePort = 4010;
-const _log_dirname = '/Users/proal-mac/Code/AxiomLabs/Axiom/back/axiom-backend/';
+const _log_dirname =
+    '/Users/proal-mac/Code/AxiomLabs/Axiom/back/axiom-backend/';
 
 // Test db connection
 const env = process.env.NODE_ENV || 'development';
@@ -142,7 +143,9 @@ app.get(
     passport.authenticate('jwt', { session: false }),
     userProfileRouter
 );
-app.use('/api/posts', postsRouter);
+app.use(
+    '/api/posts', passport.authenticate('jwt', { session: false }), postsRouter
+);
 // app.get(
 //     '/api/profile',
 //     passport.authenticate('jwt', { session: false }),
