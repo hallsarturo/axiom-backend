@@ -90,58 +90,82 @@ router.get('/papers', async (req, res) => {
     try {
         // Parse pagination params with defaults and limits
         const page = parseInt(req.query.page, 10) || 1;
-        const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 50, 200); // max 200 per page
+        const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 20, 50); // Lower max for better performance
         const offset = (page - 1) * pageSize;
 
-        // Get total count and paginated results
+        // Get total count and paginated results (with only necessary fields)
         const { count, rows: paperPosts } = await db.posts.findAndCountAll({
+            attributes: ['id', 'title', 'description', 'author', 'createdAt', 'type'],
             where: { type: 'paper' },
             order: [['createdAt', 'DESC']],
             limit: pageSize,
             offset,
         });
 
-        // Optionally, fetch stats for each post (can be optimized)
-        const postsWithStats = await Promise.all(
-            paperPosts.map(async (post) => {
-                const likes = await db.post_reactions.count({
-                    where: { postId: post.id, reaction: 'like' },
-                });
-                const dislikes = await db.post_reactions.count({
-                    where: { postId: post.id, reaction: 'dislike' },
-                });
-                const laughs = await db.post_reactions.count({
-                    where: { postId: post.id, reaction: 'laugh' },
-                });
-                const angers = await db.post_reactions.count({
-                    where: { postId: post.id, reaction: 'anger' },
-                });
-                const comments = await db.post_comments.count({
-                    where: { postId: post.id },
-                });
-                const shares = await db.post_shares.count({
-                    where: { postId: post.id },
-                });
-
-                const totalReactions = await db.post_reactions.count({
-                    where: { postId: post.id },
-                });
-
-                // Exclude 'abstract' and 'content' from the response
-                const { abstract, content, ...postData } = post.toJSON();
-
-                return {
-                    ...postData,
-                    totalReactions,
-                    likes,
-                    dislikes,
-                    laughs,
-                    angers,
-                    comments,
-                    shares,
-                };
-            })
-        );
+        // More efficient query for stats - use a single query with aggregation if possible
+        const postIds = paperPosts.map(post => post.id);
+        
+        // Get all reactions counts in a single query
+        const reactionCounts = await db.post_reactions.findAll({
+            attributes: [
+                'postId',
+                'reaction',
+                [db.sequelize.fn('count', db.sequelize.col('id')), 'count']
+            ],
+            where: { postId: postIds },
+            group: ['postId', 'reaction'],
+        });
+        
+        // Get comments counts in a single query
+        const commentCounts = await db.post_comments.findAll({
+            attributes: [
+                'postId',
+                [db.sequelize.fn('count', db.sequelize.col('id')), 'count']
+            ],
+            where: { postId: postIds },
+            group: ['postId'],
+        });
+        
+        // Get share counts in a single query
+        const shareCounts = await db.post_shares.findAll({
+            attributes: [
+                'postId',
+                [db.sequelize.fn('count', db.sequelize.col('id')), 'count']
+            ],
+            where: { postId: postIds },
+            group: ['postId'],
+        });
+        
+        // Map the counts to each post
+        const postsWithStats = paperPosts.map(post => {
+            const postId = post.id;
+            const { abstract, content, ...postData } = post.toJSON();
+            
+            // Get reaction counts for this post
+            const likes = reactionCounts.find(r => r.postId === postId && r.reaction === 'like')?.count || 0;
+            const dislikes = reactionCounts.find(r => r.postId === postId && r.reaction === 'dislike')?.count || 0;
+            const laughs = reactionCounts.find(r => r.postId === postId && r.reaction === 'laugh')?.count || 0;
+            const angers = reactionCounts.find(r => r.postId === postId && r.reaction === 'anger')?.count || 0;
+            
+            // Get comment count for this post
+            const comments = commentCounts.find(c => c.postId === postId)?.count || 0;
+            
+            // Get share count for this post
+            const shares = shareCounts.find(s => s.postId === postId)?.count || 0;
+            
+            const totalReactions = likes + dislikes + laughs + angers;
+            
+            return {
+                ...postData,
+                totalReactions,
+                likes,
+                dislikes,
+                laughs,
+                angers,
+                comments,
+                shares,
+            };
+        });
 
         res.status(200).json({
             paperPosts: postsWithStats,
