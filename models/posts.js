@@ -28,7 +28,7 @@ export default (sequelize, DataTypes) => {
                 allowNull: true,
             },
             title: {
-                type: DataTypes.STRING,
+                type: DataTypes.TEXT,
                 allowNull: false,
             },
             description: {
@@ -76,11 +76,11 @@ export default (sequelize, DataTypes) => {
                 defaultValue: 0,
             },
             identifier: {
-                type: DataTypes.STRING,
+                type: DataTypes.TEXT,
                 allowNull: true,
             },
             author: {
-                type: DataTypes.STRING,
+                type: DataTypes.TEXT,
                 allowNull: true,
             },
             subject: {
@@ -96,7 +96,7 @@ export default (sequelize, DataTypes) => {
                 allowNull: true,
             },
             dc_title: {
-                type: DataTypes.STRING,
+                type: DataTypes.TEXT,
                 allowNull: true,
             },
             dc_type: {
@@ -104,7 +104,7 @@ export default (sequelize, DataTypes) => {
                 allowNull: true,
             },
             dc_creator: {
-                type: DataTypes.STRING, // Store as comma-separated string or JSON string if array
+                type: DataTypes.TEXT, // Store as comma-separated string or JSON string if array
                 allowNull: true,
             },
             dc_subject: {
@@ -116,7 +116,7 @@ export default (sequelize, DataTypes) => {
                 allowNull: true,
             },
             dc_identifier: {
-                type: DataTypes.STRING,
+                type: DataTypes.TEXT,
                 allowNull: true,
             },
             dc_language: {
