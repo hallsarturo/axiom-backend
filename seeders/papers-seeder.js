@@ -10,8 +10,6 @@ export async function up(queryInterface, Sequelize) {
         type: 'paper',
         title: post.title,
         description: post.description,
-        abstract: post.description, // or another field if available
-        content: post.description,  // or another field if available
         image: null,                // or set if you have an image field
         identifier: post.identifier,
         author: Array.isArray(post.creator) ? post.creator.join(', ') : post.creator,
