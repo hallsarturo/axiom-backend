@@ -94,7 +94,7 @@ export async function up(queryInterface) {
         }
     }
 
-    await testSimpleInsert();
+    //await testSimpleInsert();
 
     // Track existing identifiers to avoid duplicates
     const existingIdentifiers = new Set();

@@ -7,13 +7,25 @@ const router = Router();
  * @swagger
  * /api/posts/papers:
  *   get:
- *     summary: Get all paper posts
- *     description: Retrieve all posts of type 'paper' with reaction and engagement statistics. Requires authentication.
- *     security:
- *       - cookieAuth: []
+ *     summary: Get paginated paper posts
+ *     description: Retrieve paginated posts of type 'paper' with reaction and engagement statistics. Supports infinite scrolling via pagination. 
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (for pagination)
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *           maximum: 200
+ *         description: Number of posts per page (max 200)
  *     responses:
  *       200:
- *         description: List of paper posts with stats
+ *         description: List of paginated paper posts with stats
  *         content:
  *           application/json:
  *             schema:
@@ -31,8 +43,6 @@ const router = Router();
  *                       description:
  *                         type: string
  *                       abstract:
- *                         type: string
- *                       content:
  *                         type: string
  *                       image:
  *                         type: string
@@ -59,112 +69,39 @@ const router = Router();
  *                         type: integer
  *                       shares:
  *                         type: integer
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     pageSize:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
  *       401:
  *         description: Unauthorized - JWT required
  *       500:
  *         description: Could not fetch posts
- *
- * /api/posts/reaction:
- *   put:
- *     summary: Add, update, or remove a reaction for a post
- *     description: Adds a new reaction, updates an existing reaction, or removes the reaction if the same type is clicked again. Requires authentication.
- *     security:
- *       - cookieAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               postId:
- *                 type: integer
- *                 description: The ID of the post to react to
- *               reaction:
- *                 type: string
- *                 enum: [like, dislike, laugh, anger]
- *                 description: The type of reaction to add or update
- *     responses:
- *       200:
- *         description: Reaction updated or removed
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *       201:
- *         description: Reaction added
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *       400:
- *         description: Invalid reaction type or missing postId
- *       401:
- *         description: Unauthorized - JWT required
- *       500:
- *         description: Could not update reaction
- *
- * /api/posts/{postId}:
- *   get:
- *     summary: Get a single post by ID with reaction stats
- *     description: Returns a post by ID, including counts for each reaction type and the current user's reaction if authenticated.
- *     security:
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: postId
- *         required: true
- *         schema:
- *           type: integer
- *         description: The ID of the post to retrieve
- *     responses:
- *       200:
- *         description: Post data with reaction stats
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: integer
- *                 title:
- *                   type: string
- *                 description:
- *                   type: string
- *                 likes:
- *                   type: integer
- *                 dislikes:
- *                   type: integer
- *                 laughs:
- *                   type: integer
- *                 angers:
- *                   type: integer
- *                 currentUserReaction:
- *                   type: string
- *                   nullable: true
- *                   description: The current user's reaction type or null
- *                 # ...other post fields as needed
- *       401:
- *         description: Unauthorized - JWT required
- *       404:
- *         description: Post not found
- *       500:
- *         description: Server error
  */
 
 router.get('/papers', async (req, res) => {
     try {
-        const paperPosts = await db.posts.findAll({
+        // Parse pagination params with defaults and limits
+        const page = parseInt(req.query.page, 10) || 1;
+        const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 50, 200); // max 200 per page
+        const offset = (page - 1) * pageSize;
+
+        // Get total count and paginated results
+        const { count, rows: paperPosts } = await db.posts.findAndCountAll({
             where: { type: 'paper' },
             order: [['createdAt', 'DESC']],
+            limit: pageSize,
+            offset,
         });
 
+        // Optionally, fetch stats for each post (can be optimized)
         const postsWithStats = await Promise.all(
             paperPosts.map(async (post) => {
                 const likes = await db.post_reactions.count({
@@ -206,7 +143,15 @@ router.get('/papers', async (req, res) => {
             })
         );
 
-        res.status(200).json({ paperPosts: postsWithStats });
+        res.status(200).json({
+            paperPosts: postsWithStats,
+            pagination: {
+                total: count,
+                page,
+                pageSize,
+                totalPages: Math.ceil(count / pageSize),
+            },
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Could not fetch posts' });
@@ -312,10 +257,10 @@ router.get('/:postId', async (req, res) => {
 
     if (process.env.NODE_ENV === 'development') {
         userId = req.query?.userId || req.user?.id; // Use query param for dev
-        console.log('Req userId: ', userId)
+        console.log('Req userId: ', userId);
     } else {
         userId = req.user?.id;
-        console.log('Req  else userId: ', userId)
+        console.log('Req  else userId: ', userId);
     }
 
     try {

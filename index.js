@@ -137,23 +137,17 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/login', loginRouter);
 app.use('/api/signup', signupRouter);
 app.use('/api/auth', authRouter);
-app.get('/api/dashboard', passport.authenticate('jwt', { session: false }), dashboardRouter);
+app.get(
+    '/api/dashboard',
+    passport.authenticate('jwt', { session: false }),
+    dashboardRouter
+);
 app.get(
     '/api/user',
     passport.authenticate('jwt', { session: false }),
     userProfileRouter
 );
-app.use(
-    '/api/posts', postsRouter
-);
-// app.get(
-//     '/api/profile',
-//     passport.authenticate('jwt', { session: false }),
-//     (req, res) => {
-//         console.log('Cookies:', req.cookies); // Debug
-//         res.status(200).json({ user: req.user });
-//     }
-// );
+app.use('/api/posts', postsRouter);
 app.post('/api/logout', function (req, res, next) {
     req.logout(function (err) {
         if (err) {
