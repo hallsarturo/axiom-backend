@@ -5,21 +5,29 @@ const router = Router();
 
 /**
  * @swagger
- * /api/dashboard:
+ * /api/dashboard/categories/{parentId}:
  *   get:
- *     summary: Get dashboard configuration options
- *     description: Returns all available degree levels and subjects for user dashboard configuration. Requires authentication.
- *     security:
- *       - cookieAuth: []
+ *     summary: Get child categories for a given parent category
+ *     description: |
+ *       Returns all child categories for the specified parent category ID.
+ *       - If parentId is null or 0, returns top-level (level0) categories.
+ *       - If parentId is a valid category ID, returns its direct children.
+ *     parameters:
+ *       - in: path
+ *         name: parentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the parent category. Use "null" or "0" for top-level categories.
  *     responses:
  *       200:
- *         description: List of degree levels and subjects
+ *         description: List of child categories
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 degreeLevels:
+ *                 children:
  *                   type: array
  *                   items:
  *                     type: object
@@ -28,45 +36,35 @@ const router = Router();
  *                         type: integer
  *                       name:
  *                         type: string
- *                       imgSrc:
+ *                       level0:
  *                         type: string
- *                       imgAlt:
+ *                       level1:
  *                         type: string
- *                 subjects:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
+ *                       level2:
+ *                         type: string
+ *                       level3:
+ *                         type: string
+ *                       level4:
+ *                         type: string
+ *                       parent_id:
  *                         type: integer
- *                       name:
- *                         type: string
- *                       imgSrc:
- *                         type: string
- *                       imgAlt:
- *                         type: string
- *       401:
- *         description: Unauthorized - JWT required
+ *       404:
+ *         description: Route not found or invalid parentId
  *       500:
- *         description: Couldn't retrieve dashboard info
+ *         description: Couldn't retrieve category children
  */
 
-router.use('/', async (req, res) => {
+router.get('/categories/:parentId', async (req, res) => {
     try {
-        // get all elements from degree-level table
-        const degreeLevels = await db.degree_levels.findAll({
-            attributes: ['id', 'name', 'imgSrc', 'imgAlt'],
+        const { parentId } = req.params;
+        const children = await db.philarchive_categories.findAll({
+            where: { parent_id: parentId },
         });
 
-        // get all elements from subjects
-        const subjects = await db.subjects.findAll({
-            attributes: ['id', 'name', 'imgSrc', 'imgAlt'],
-        });
-
-        res.status(200).json({ degreeLevels, subjects });
+        res.status(200).json({ children });
     } catch (err) {
-        console.error("couldn't retrieve dashboard info", err);
-        res.status(500).json({ error: "Couldn't retrieve dashboard info" });
+        console.error("couldn't retrieve category children", err);
+        res.status(500).json({ error: "Couldn't retrieve category children" });
     }
 });
 

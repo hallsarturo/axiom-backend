@@ -68,6 +68,12 @@ export default (sequelize, DataTypes) => {
                 allowNull: false,
                 defaultValue: false,
             },
+            about: {
+                type: DataTypes.TEXT,
+                allowNull: true,
+                // Optionally, add a comment for documentation
+                comment: 'User description/about field',
+            },
         },
         {
             timestamps: false,
