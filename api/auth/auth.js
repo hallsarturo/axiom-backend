@@ -36,7 +36,7 @@ passport.use(
         async (jwtPayload, done) => {
             // Your verification logic
             try {
-                console.log('JWT payload:', jwtPayload); // Debug
+                // console.log('JWT payload:', jwtPayload); // Debug
                 const user = await db.users.findUserById({ id: jwtPayload.id });
                 if (!user) {
                     console.log('No user found for id:', jwtPayload.id); // Debug
@@ -90,7 +90,6 @@ passport.use(
 
         async (accessToken, refreshToken, profile, done) => {
             try {
-                console.log('profile: ', profile);
 
                 // Use the correct way to get email from Google profile
                 const email =
@@ -175,7 +174,6 @@ router.get(
 
         if (process.env.NODE_ENV === 'production') {
             // Set JWT as httpOnly cookie and redirect
-            console.log('entered production');
             res.cookie('token', token, {
                 httpOnly: true,
                 secure: true,

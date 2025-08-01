@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import db from '../../models/index.js';
+import upload from '../../lib/upload.js';
+import authenticate from '../../lib/authenticate.js';
+import path from 'path';
+import fs from 'fs';
 
 const router = Router();
 
@@ -26,7 +30,7 @@ const router = Router();
  *                     username:
  *                       type: string
  *                     id:
- *                       type: integer    
+ *                       type: integer
  *                     displayName:
  *                       type: string
  *                     photoUrl:
@@ -41,9 +45,9 @@ const router = Router();
 
 router.use('/', async (req, res) => {
     // logging debug
-    console.log('Headers:', req.headers);
-    console.log('Cookies:', req.cookies);
-    console.log('Body:', req.body);
+    // console.log('Headers:', req.headers);
+    // console.log('Cookies:', req.cookies);
+    // console.log('Body:', req.body);
 
     // Check user authorization
     let token;
@@ -55,9 +59,9 @@ router.use('/', async (req, res) => {
         const authHeader = req.headers.authorization;
         if (authHeader && authHeader.startsWith('Bearer ')) {
             token = authHeader.replace('Bearer ', '');
-            console.log('token: ', token);
+           // console.log('token: ', token);
         } else {
-            console.log('entered cookies ');
+           // console.log('entered cookies ');
             token = req.cookies.token; // fallback if sent as cookie
         }
     }
@@ -76,7 +80,7 @@ router.use('/', async (req, res) => {
 
     // Find user by id
     const user = await db.users.findUserById({ id: payload.id });
-    console.log('user: ', user);
+    // console.log('user: ', user);
     if (!user) {
         return res.status(404).json({ error: 'User not found' });
     }
@@ -98,8 +102,32 @@ router.use('/', async (req, res) => {
         // Replace username with displayName if available
         responseUser.username = provider.displayName || user.username;
     }
-    console.log('responseUser: ', responseUser);
+    // console.log('responseUser: ', responseUser);
     res.status(200).json({ user: responseUser });
 });
+
+router.post(
+    '/profile/picture',
+    authenticate,
+    upload.single('file'),
+    async (req, res) => {
+        console.log('entered profile/picture logic ');
+        try {
+            // Save the file path or URL to the user's profile (if needed)
+            const fileUrl = `/uploads/profile-images/${req.file.filename}`;
+            // await db.auth_providers.update(
+            //     { photoUrl: fileUrl },
+            //     { where: { userId: req.userId } }
+            // );
+            res.status(200).json({
+                message: 'image upload successfull',
+                url: fileUrl,
+            });
+        } catch (err) {
+            console.error('Profile image upload error:', err);
+            res.status(500).json({ error: 'Upload failed' });
+        }
+    }
+);
 
 export { router };

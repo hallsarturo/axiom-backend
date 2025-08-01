@@ -58,7 +58,7 @@ router.post('/', async (req, res) => {
     try {
         const userData = req.body;
         const mobilePhone = userData.mobilePhone;
-        console.log('userData: ', userData);
+        // console.log('userData: ', userData);
 
         // Check if user already exists
         const existingUser = await db.users.findOne({
@@ -130,7 +130,7 @@ router.post('/', async (req, res) => {
             'secret',
             { expiresIn: '15m' }
         );
-        console.log('created token: ', provisionalToken);
+        // console.log('created token: ', provisionalToken);
         res.cookie('token', provisionalToken, {
             httpOnly: true,
             secure: true,
@@ -173,7 +173,7 @@ router.post('/', async (req, res) => {
 
 router.post('/verify', async (req, res) => {
     try {
-        console.log('Entered to /verify call');
+        // console.log('Entered to /verify call');
 
         // Try to get token from Authorization header OR cookie
 
@@ -201,7 +201,7 @@ router.post('/verify', async (req, res) => {
                 .json({ error: 'No signup data found in token.' });
         }
 
-        console.log('Data: ', userData, ' otpCode: ', otpCode);
+        // console.log('Data: ', userData, ' otpCode: ', otpCode);
 
         const user = await db.users.findUserById(userData);
         if (!user) {

@@ -281,10 +281,10 @@ router.get('/:postId', async (req, res) => {
 
     if (process.env.NODE_ENV === 'development') {
         userId = req.query?.userId || req.user?.id; // Use query param for dev
-        console.log('Req userId: ', userId);
+        // console.log('Req userId: ', userId);
     } else {
         userId = req.user?.id;
-        console.log('Req  else userId: ', userId);
+        // console.log('Req  else userId: ', userId);
     }
 
     try {
@@ -308,7 +308,7 @@ router.get('/:postId', async (req, res) => {
 
         let currentUserReaction = null;
         if (userId) {
-            console.log('db entered user id: ', userId);
+           // console.log('db entered user id: ', userId);
             const reactionObj = await db.post_reactions.findOne({
                 where: { postId, userId },
             });
@@ -316,7 +316,7 @@ router.get('/:postId', async (req, res) => {
         }
 
         const { abstract, content, ...postData } = post.toJSON();
-        console.log('currentUserReaction: ', currentUserReaction);
+       // console.log('currentUserReaction: ', currentUserReaction);
 
         const response = {
             ...postData,
