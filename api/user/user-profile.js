@@ -9,7 +9,7 @@ const router = Router();
  * /api/user:
  *   get:
  *     summary: Get user profile
- *     description: Returns the authenticated user's profile, including displayName and photoUrl if available.
+ *     description: Returns the authenticated user's profile, including displayName, photoUrl, and about if available.
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -30,6 +30,8 @@ const router = Router();
  *                     displayName:
  *                       type: string
  *                     photoUrl:
+ *                       type: string
+ *                     about:
  *                       type: string
  *       401:
  *         description: Unauthorized or invalid token
@@ -87,6 +89,7 @@ router.use('/', async (req, res) => {
     let responseUser = {
         username: user.username,
         id: user.id,
+        about: String(user.about),
     };
 
     if (provider) {
@@ -95,7 +98,7 @@ router.use('/', async (req, res) => {
         // Replace username with displayName if available
         responseUser.username = provider.displayName || user.username;
     }
-    console.log('responseUSer: ', responseUser);
+    console.log('responseUser: ', responseUser);
     res.status(200).json({ user: responseUser });
 });
 
