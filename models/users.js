@@ -74,6 +74,11 @@ export default (sequelize, DataTypes) => {
                 // Optionally, add a comment for documentation
                 comment: 'User description/about field',
             },
+            userProfilePic: {
+                type: DataTypes.STRING(255),
+                allowNull: true,
+                comment: 'Relative path to user profile picture',
+            },
         },
         {
             timestamps: false,

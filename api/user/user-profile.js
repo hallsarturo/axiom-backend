@@ -8,22 +8,66 @@ import fs from 'fs';
 
 const router = Router();
 
+/**
+ * @swagger
+ * /api/user/profile/picture:
+ *   post:
+ *     summary: Upload or update user profile picture
+ *     description: Uploads a new profile image for the authenticated user. The image is saved and its relative path is stored in the userProfilePic column. Only one image per user is allowed; new uploads overwrite the previous image.
+ *     tags:
+ *       - User
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: The image file to upload.
+ *     responses:
+ *       200:
+ *         description: Image upload successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 profileUrl:
+ *                   type: string
+ *                   description: Relative path to the uploaded profile image
+ *       401:
+ *         description: Unauthorized or invalid token
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Upload failed
+ */
+
 router.post(
     '/profile/picture',
     authenticate,
     upload.single('file'),
     async (req, res) => {
-        console.log('entered profile/picture logic ');
         try {
-            // Save the file path or URL to the user's profile (if needed)
+            // Save relative path
             const fileUrl = `/uploads/profile-images/${req.file.filename}`;
-            // await db.auth_providers.update(
-            //     { photoUrl: fileUrl },
-            //     { where: { userId: req.userId } }
-            // );
+
+            // Overwrite old photo: update userProfilePic in users table
+            await db.users.update(
+                { userProfilePic: fileUrl },
+                { where: { id: req.userId } }
+            );
+
             res.status(200).json({
-                message: 'image upload successfull',
-                url: fileUrl,
+                message: 'Image upload successful',
+                profileUrl: fileUrl,
             });
         } catch (err) {
             console.error('Profile image upload error:', err);
@@ -61,6 +105,10 @@ router.post(
  *                       type: string
  *                     about:
  *                       type: string
+ *                     userProfilePic:
+ *                       type: string
+ *                       nullable: true
+ *                       description: Relative path to the uploaded profile image, or null if not set
  *       401:
  *         description: Unauthorized or invalid token
  *       404:
@@ -118,6 +166,7 @@ router.use('/', async (req, res) => {
         username: user.username,
         id: user.id,
         about: String(user.about),
+        userProfilePic: user.userProfilePic || null,
     };
 
     if (provider) {
