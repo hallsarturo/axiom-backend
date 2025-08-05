@@ -76,6 +76,37 @@ router.post(
     }
 );
 
+router.post('/preferences', authenticate, async (req, res) => {
+    try {
+        // Get data from request body
+        const { about, degreeLevel, categories } = req.body;
+
+        // Update 'about' in users table
+        await db.users.update({ about }, { where: { id: req.userId } });
+
+        // Update categories in user_preferences (replace all for user)
+        if (Array.isArray(categories)) {
+            // Remove old preferences
+            await db.user_preferences.destroy({
+                where: { userId: req.userId },
+            });
+            // Add new preferences
+            for (const subjectId of categories) {
+                await db.user_preferences.create({
+                    userId: req.userId,
+                    degreeLevelId: degreeLevel,
+                    subjectId,
+                });
+            }
+        }
+
+        res.status(200).json({ message: 'Preferences updated successfully' });
+    } catch (err) {
+        console.error('Error updating preferences:', err);
+        res.status(500).json({ error: 'Failed to update preferences' });
+    }
+});
+
 /**
  * @swagger
  * /api/user:
@@ -165,10 +196,10 @@ router.use('/', async (req, res) => {
     let responseUser = {
         username: user.username,
         id: user.id,
-        about: String(user.about),
+        about: user.about && user.about.trim() !== '' ? String(user.about) : null,
         //userProfilePic: user.userProfilePic || null,
     };
-    console.log('userProfilePic: ', typeof(user.userProfilePic))
+    console.log('userProfilePic: ', typeof user.userProfilePic);
     if (provider) {
         responseUser.displayName = provider.displayName;
         responseUser.photoUrl = user.userProfilePic
