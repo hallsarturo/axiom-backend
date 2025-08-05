@@ -166,14 +166,18 @@ router.use('/', async (req, res) => {
         username: user.username,
         id: user.id,
         about: String(user.about),
-        userProfilePic: user.userProfilePic || null,
+        //userProfilePic: user.userProfilePic || null,
     };
-
+    console.log('userProfilePic: ', typeof(user.userProfilePic))
     if (provider) {
         responseUser.displayName = provider.displayName;
-        responseUser.photoUrl = provider.photoUrl;
+        responseUser.photoUrl = user.userProfilePic
+            ? process.env.BACKEND_URL + user.userProfilePic
+            : provider.photoUrl;
         // Replace username with displayName if available
-        responseUser.username = provider.displayName || user.username;
+        responseUser.username = provider.displayName
+            ? provider.displayName
+            : user.username;
     }
     // console.log('responseUser: ', responseUser);
     res.status(200).json({ user: responseUser });

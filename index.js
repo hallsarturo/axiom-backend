@@ -143,6 +143,7 @@ app.use(
     passport.authenticate('jwt', { session: false }),
     userProfileRouter
 );
+app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
 app.use('/api/posts', postsRouter);
 app.post('/api/logout', function (req, res, next) {
     req.logout(function (err) {
