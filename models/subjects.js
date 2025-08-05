@@ -24,7 +24,7 @@ export default (sequelize, DataTypes) => {
 
     Subject.associate = (db) => {
         Subject.belongsTo(db.interest_areas, { foreignKey: 'interestAreaId' });
-        Subject.hasMany(db.user_preferences, { foreignKey: 'subjectId' });
+        //Subject.hasMany(db.user_preferences, { foreignKey: 'subjectId' });
     };
 
     return Subject;

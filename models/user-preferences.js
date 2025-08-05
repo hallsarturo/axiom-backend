@@ -15,10 +15,6 @@ export default (sequelize, DataTypes) => {
                 type: DataTypes.INTEGER,
                 allowNull: false,
             },
-            subjectId: {
-                type: DataTypes.INTEGER,
-                allowNull: false,
-            },
         },
         {
             timestamps: false,
@@ -30,7 +26,10 @@ export default (sequelize, DataTypes) => {
         UserPreference.belongsTo(db.degree_levels, {
             foreignKey: 'degreeLevelId',
         });
-        UserPreference.belongsTo(db.subjects, { foreignKey: 'subjectId' });
+        UserPreference.hasMany(db.user_category_preferences, {
+            foreignKey: 'userId',
+            sourceKey: 'userId',
+        });
     };
 
     return UserPreference;
