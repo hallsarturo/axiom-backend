@@ -161,8 +161,10 @@ router.put('/preferences', authenticate, async (req, res) => {
  * @swagger
  * /api/user:
  *   get:
+ *     tags:
+ *       - User
  *     summary: Get user profile
- *     description: Returns the authenticated user's profile, including displayName, photoUrl, and about if available.
+ *     description: Returns the authenticated user's profile, including displayName, photoUrl, about, degree level, and preferred categories if available.
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -190,6 +192,27 @@ router.put('/preferences', authenticate, async (req, res) => {
  *                       type: string
  *                       nullable: true
  *                       description: Relative path to the uploaded profile image, or null if not set
+ *                     degreeLevel:
+ *                       type: object
+ *                       nullable: true
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                         imgSrc:
+ *                           type: string
+ *                         imgAlt:
+ *                           type: string
+ *                     categories:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           name:
+ *                             type: string
  *       401:
  *         description: Unauthorized or invalid token
  *       404:
@@ -243,25 +266,54 @@ router.use('/', async (req, res) => {
         where: { userId: user.id },
     });
 
+    // Add user's degree level
+    let degreeLevel = null;
+    const userPref = await db.user_preferences.findOne({
+        where: { userId: user.id },
+        include: [
+            {
+                model: db.degree_levels,
+                attributes: ['id', 'name', 'imgSrc', 'imgAlt'],
+            },
+        ],
+    });
+    if (userPref && userPref.degree_level) {
+        degreeLevel = {
+            id: userPref.degree_level.id,
+            name: userPref.degree_level.name,
+            imgSrc: userPref.degree_level.imgSrc,
+            imgAlt: userPref.degree_level.imgAlt,
+        };
+    }
+
+    // Add User's category preferences
+    const categoryPrefs = await db.user_category_preferences.findAll({
+        where: { userId: user.id },
+        include: [{ model: db.categories, attributes: ['id', 'name'] }],
+    });
+    const categories = categoryPrefs.map((pref) => ({
+        id: pref.category?.id,
+        name: pref.category?.name,
+    }));
+
     let responseUser = {
         username: user.username,
         id: user.id,
         about:
             user.about && user.about.trim() !== '' ? String(user.about) : null,
-        //userProfilePic: user.userProfilePic || null,
+        degreeLevel,
+        categories,
+        userProfilePic: user.userProfilePic || null,
     };
-    console.log('userProfilePic: ', typeof user.userProfilePic);
     if (provider) {
         responseUser.displayName = provider.displayName;
         responseUser.photoUrl = user.userProfilePic
             ? process.env.BACKEND_URL + user.userProfilePic
             : provider.photoUrl;
-        // Replace username with displayName if available
         responseUser.username = provider.displayName
             ? provider.displayName
             : user.username;
     }
-    // console.log('responseUser: ', responseUser);
     res.status(200).json({ user: responseUser });
 });
 
