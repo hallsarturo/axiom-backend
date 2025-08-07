@@ -55,6 +55,8 @@ passport.use(
  * @swagger
  * /api/auth/google:
  *   get:
+ *     tags:
+ *       - Auth
  *     summary: Google OAuth login
  *     description: Redirects user to Google for authentication.
  *     responses:
@@ -142,6 +144,8 @@ passport.use(
  * @swagger
  * /api/auth/google/callback:
  *   get:
+ *     tags:
+ *       - Auth
  *     summary: Google OAuth callback
  *     description: Handles Google OAuth callback, creates user if needed, and issues JWT.
  *     responses:

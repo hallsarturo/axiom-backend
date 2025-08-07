@@ -7,6 +7,8 @@ const router = Router();
  * @swagger
  * /api/dashboard/categories/{parentId}:
  *   get:
+ *     tags:
+ *       - Dashboard
  *     summary: Get child categories for a given parent category
  *     description: |
  *       Returns all child categories for the specified parent category ID.

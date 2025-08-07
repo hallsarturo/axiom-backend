@@ -7,8 +7,10 @@ const router = Router();
  * @swagger
  * /api/posts/papers:
  *   get:
+ *     tags:
+ *       - Posts
  *     summary: Get paginated paper posts
- *     description: Retrieve paginated posts of type 'paper' with reaction and engagement statistics. Supports infinite scrolling via pagination. 
+ *     description: Retrieve paginated posts of type 'paper' with reaction and engagement statistics. Supports infinite scrolling via pagination.
  *     parameters:
  *       - in: query
  *         name: page
@@ -95,7 +97,14 @@ router.get('/papers', async (req, res) => {
 
         // Get total count and paginated results (with only necessary fields)
         const { count, rows: paperPosts } = await db.posts.findAndCountAll({
-            attributes: ['id', 'title', 'description', 'author', 'createdAt', 'type'],
+            attributes: [
+                'id',
+                'title',
+                'description',
+                'author',
+                'createdAt',
+                'type',
+            ],
             where: { type: 'paper' },
             order: [['createdAt', 'DESC']],
             limit: pageSize,
@@ -103,58 +112,72 @@ router.get('/papers', async (req, res) => {
         });
 
         // More efficient query for stats - use a single query with aggregation if possible
-        const postIds = paperPosts.map(post => post.id);
-        
+        const postIds = paperPosts.map((post) => post.id);
+
         // Get all reactions counts in a single query
         const reactionCounts = await db.post_reactions.findAll({
             attributes: [
                 'postId',
                 'reaction',
-                [db.sequelize.fn('count', db.sequelize.col('id')), 'count']
+                [db.sequelize.fn('count', db.sequelize.col('id')), 'count'],
             ],
             where: { postId: postIds },
             group: ['postId', 'reaction'],
         });
-        
+
         // Get comments counts in a single query
         const commentCounts = await db.post_comments.findAll({
             attributes: [
                 'postId',
-                [db.sequelize.fn('count', db.sequelize.col('id')), 'count']
+                [db.sequelize.fn('count', db.sequelize.col('id')), 'count'],
             ],
             where: { postId: postIds },
             group: ['postId'],
         });
-        
+
         // Get share counts in a single query
         const shareCounts = await db.post_shares.findAll({
             attributes: [
                 'postId',
-                [db.sequelize.fn('count', db.sequelize.col('id')), 'count']
+                [db.sequelize.fn('count', db.sequelize.col('id')), 'count'],
             ],
             where: { postId: postIds },
             group: ['postId'],
         });
-        
+
         // Map the counts to each post
-        const postsWithStats = paperPosts.map(post => {
+        const postsWithStats = paperPosts.map((post) => {
             const postId = post.id;
             const { abstract, content, ...postData } = post.toJSON();
-            
+
             // Get reaction counts for this post
-            const likes = reactionCounts.find(r => r.postId === postId && r.reaction === 'like')?.count || 0;
-            const dislikes = reactionCounts.find(r => r.postId === postId && r.reaction === 'dislike')?.count || 0;
-            const laughs = reactionCounts.find(r => r.postId === postId && r.reaction === 'laugh')?.count || 0;
-            const angers = reactionCounts.find(r => r.postId === postId && r.reaction === 'anger')?.count || 0;
-            
+            const likes =
+                reactionCounts.find(
+                    (r) => r.postId === postId && r.reaction === 'like'
+                )?.count || 0;
+            const dislikes =
+                reactionCounts.find(
+                    (r) => r.postId === postId && r.reaction === 'dislike'
+                )?.count || 0;
+            const laughs =
+                reactionCounts.find(
+                    (r) => r.postId === postId && r.reaction === 'laugh'
+                )?.count || 0;
+            const angers =
+                reactionCounts.find(
+                    (r) => r.postId === postId && r.reaction === 'anger'
+                )?.count || 0;
+
             // Get comment count for this post
-            const comments = commentCounts.find(c => c.postId === postId)?.count || 0;
-            
+            const comments =
+                commentCounts.find((c) => c.postId === postId)?.count || 0;
+
             // Get share count for this post
-            const shares = shareCounts.find(s => s.postId === postId)?.count || 0;
-            
+            const shares =
+                shareCounts.find((s) => s.postId === postId)?.count || 0;
+
             const totalReactions = likes + dislikes + laughs + angers;
-            
+
             return {
                 ...postData,
                 totalReactions,
@@ -186,6 +209,8 @@ router.get('/papers', async (req, res) => {
  * @swagger
  * /api/posts/reaction:
  *   put:
+ *     tags:
+ *       - Posts
  *     summary: Add or update a reaction for a post
  *     description: Adds a new reaction or updates an existing reaction for the authenticated user on the specified post. Requires authentication.
  *     security:
@@ -198,6 +223,7 @@ router.get('/papers', async (req, res) => {
  *             type: object
  *             properties:
  *               postId:
+ *                 type: integer
  *               reaction:
  *                 type: string
  *                 enum: [like, dislike, laugh, anger]
@@ -275,6 +301,57 @@ router.put('/reaction', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/posts/{postId}:
+ *   get:
+ *     tags:
+ *       - Posts
+ *     summary: Get a single post by ID with reaction stats
+ *     description: Returns a single post with its reaction counts and the current user's reaction.
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the post to retrieve
+ *     responses:
+ *       200:
+ *         description: Post details with reaction stats
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 title:
+ *                   type: string
+ *                 description:
+ *                   type: string
+ *                 author:
+ *                   type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 likes:
+ *                   type: integer
+ *                 dislikes:
+ *                   type: integer
+ *                 laughs:
+ *                   type: integer
+ *                 angers:
+ *                   type: integer
+ *                 currentUserReaction:
+ *                   type: string
+ *                   nullable: true
+ *       404:
+ *         description: Post not found
+ *       500:
+ *         description: Server error
+ */
+
 router.get('/:postId', async (req, res) => {
     const { postId } = req.params;
     let userId;
@@ -308,7 +385,7 @@ router.get('/:postId', async (req, res) => {
 
         let currentUserReaction = null;
         if (userId) {
-           // console.log('db entered user id: ', userId);
+            // console.log('db entered user id: ', userId);
             const reactionObj = await db.post_reactions.findOne({
                 where: { postId, userId },
             });
@@ -316,7 +393,7 @@ router.get('/:postId', async (req, res) => {
         }
 
         const { abstract, content, ...postData } = post.toJSON();
-       // console.log('currentUserReaction: ', currentUserReaction);
+        // console.log('currentUserReaction: ', currentUserReaction);
 
         const response = {
             ...postData,

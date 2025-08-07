@@ -296,6 +296,8 @@ router.use('/', async (req, res) => {
         name: pref.category?.name,
     }));
 
+    console.log('categories: ', categories)
+    
     let responseUser = {
         username: user.username,
         id: user.id,

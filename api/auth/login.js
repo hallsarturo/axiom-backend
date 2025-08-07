@@ -9,6 +9,8 @@ const router = Router();
  * @swagger
  * /api/login:
  *   post:
+ *     tags:
+ *       - Auth
  *     summary: User login
  *     description: Authenticates a user and returns a JWT token.
  *     requestBody:
@@ -25,8 +27,38 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   description: JWT token (development only)
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     username:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     mobilePhone:
+ *                       type: string
+ *                     isVerified:
+ *                       type: boolean
+ *                 message:
+ *                   type: string
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 
 router.post('/', async (req, res) => {

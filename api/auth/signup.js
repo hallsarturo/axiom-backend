@@ -30,6 +30,8 @@ opts.secretOrKey = 'secret';
  * @swagger
  * /api/auth/signup:
  *   post:
+ *     tags:
+ *       - Auth
  *     summary: User signup
  *     description: Registers a new user and sends a verification code.
  *     requestBody:
@@ -153,6 +155,8 @@ router.post('/', async (req, res) => {
  * @swagger
  * /api/auth/signup/verify:
  *   post:
+ *     tags:
+ *       - Auth
  *     summary: Verify signup OTP
  *     description: Verifies the OTP code sent to the user's phone and completes signup.
  *     requestBody:
