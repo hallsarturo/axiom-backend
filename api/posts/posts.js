@@ -101,6 +101,7 @@ router.get('/papers', async (req, res) => {
                 'id',
                 'title',
                 'description',
+                'identifier',
                 'author',
                 'createdAt',
                 'type',
@@ -149,6 +150,9 @@ router.get('/papers', async (req, res) => {
         const postsWithStats = paperPosts.map((post) => {
             const postId = post.id;
             const { abstract, content, ...postData } = post.toJSON();
+            const cleanIdentifier = post.identifier?.startsWith('oai:')
+                ? post.identifier.replace(/^oai:/, '')
+                : post.identifier;
 
             // Get reaction counts for this post
             const likes =
@@ -180,6 +184,7 @@ router.get('/papers', async (req, res) => {
 
             return {
                 ...postData,
+                identifier: cleanIdentifier,
                 totalReactions,
                 likes,
                 dislikes,
