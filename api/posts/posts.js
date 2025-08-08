@@ -264,6 +264,7 @@ router.put('/reaction', async (req, res) => {
     try {
         let userId;
         const { postId, reaction } = req.body;
+        console.log('\n\n/reaction request: ', req.body, '\n\n');
 
         if (process.env.NODE_ENV === 'development') {
             userId = req.body?.userId || req.user?.id;
@@ -290,14 +291,33 @@ router.put('/reaction', async (req, res) => {
         if (existingReaction) {
             if (existingReaction.reaction === reaction) {
                 await existingReaction.destroy();
+                // Decrement the counter for this reaction type
+                await db.posts.increment(
+                    { [`${reaction}sCount`]: -1 },
+                    { where: { id: postId } }
+                );
                 return res.status(200).json({ message: 'Reaction removed' });
             } else {
+                // Decrement old reaction, increment new reaction
+                await db.posts.increment(
+                    { [`${existingReaction.reaction}sCount`]: -1 },
+                    { where: { id: postId } }
+                );
                 existingReaction.reaction = reaction;
                 await existingReaction.save();
+                await db.posts.increment(
+                    { [`${reaction}sCount`]: 1 },
+                    { where: { id: postId } }
+                );
                 return res.status(200).json({ message: 'Reaction updated' });
             }
         } else {
             await db.post_reactions.create({ postId, userId, reaction });
+            // Increment the counter for this reaction type
+            await db.posts.increment(
+                { [`${reaction}sCount`]: 1 },
+                { where: { id: postId } }
+            );
             return res.status(201).json({ message: 'Reaction added' });
         }
     } catch (err) {
