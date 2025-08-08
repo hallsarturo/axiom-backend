@@ -181,6 +181,7 @@ router.get('/papers', async (req, res) => {
                 shareCounts.find((s) => s.postId === postId)?.count || 0;
 
             const totalReactions = likes + dislikes + laughs + angers;
+            console.log(`\n\nPost ${postId} totalReactions:`, totalReactions);
 
             return {
                 ...postData,
@@ -408,9 +409,12 @@ router.get('/:postId', async (req, res) => {
             where: { postId, reaction: 'anger' },
         });
 
+        // Calculate totalReactions for this post
+        const totalReactions = likes + dislikes + laughs + angers;
+        console.log(`Post ${postId} totalReactions:`, totalReactions);
+
         let currentUserReaction = null;
         if (userId) {
-            // console.log('db entered user id: ', userId);
             const reactionObj = await db.post_reactions.findOne({
                 where: { postId, userId },
             });
@@ -418,7 +422,6 @@ router.get('/:postId', async (req, res) => {
         }
 
         const { abstract, content, ...postData } = post.toJSON();
-        // console.log('currentUserReaction: ', currentUserReaction);
 
         const response = {
             ...postData,
@@ -426,6 +429,7 @@ router.get('/:postId', async (req, res) => {
             dislikes,
             laughs,
             angers,
+            totalReactions,
             currentUserReaction,
         };
 
