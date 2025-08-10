@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import db from '../../models/index.js';
+import authenticate from '../../lib/authenticate.js';
 
 const router = Router();
 
@@ -265,7 +266,7 @@ router.put('/reaction', async (req, res) => {
     try {
         let userId;
         const { postId, reaction } = req.body;
-        console.log('\n\n/reaction request: ', req.body, '\n\n');
+        // console.log('\n\n/reaction request: ', req.body, '\n\n');
 
         if (process.env.NODE_ENV === 'development') {
             userId = req.body?.userId || req.user?.id;
@@ -411,7 +412,7 @@ router.get('/:postId', async (req, res) => {
 
         // Calculate totalReactions for this post
         const totalReactions = likes + dislikes + laughs + angers;
-        console.log(`Post ${postId} totalReactions:`, totalReactions);
+        //console.log(`Post ${postId} totalReactions:`, totalReactions);
 
         let currentUserReaction = null;
         if (userId) {
@@ -437,6 +438,95 @@ router.get('/:postId', async (req, res) => {
     } catch (err) {
         console.error('/:postId error: ', err);
         res.status(500).json({ error: 'Server error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/posts/user-publish:
+ *   post:
+ *     tags:
+ *       - Posts
+ *     summary: Publish a new user post
+ *     description: Creates a new post with the provided title, content, and author. Requires authentication.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *               author:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Post created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 post:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     userId:
+ *                       type: integer
+ *                     type:
+ *                       type: string
+ *                     title:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     author:
+ *                       type: string
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Missing required fields
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Could not create post
+ */
+
+router.post('/user-publish', authenticate, async (req, res) => {
+    try {
+        const { title, content } = req.body;
+        const userId = req.userId;
+
+        if (!userId || !title ) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        // Fetch user from DB to get username
+        const user = await db.users.findUserById({ id: userId });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const newPost = await db.posts.create({
+            userId,
+            type: 'user',
+            title,
+            description: content,
+            author: user.username, // Use username from DB
+        });
+
+        res.status(201).json({ message: 'Post created', post: newPost });
+    } catch (err) {
+        console.error('/publish/usertype error:', err);
+        res.status(500).json({ error: 'Could not create post' });
     }
 });
 
