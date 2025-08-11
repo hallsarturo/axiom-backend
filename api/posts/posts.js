@@ -214,6 +214,201 @@ router.get('/papers', async (req, res) => {
 
 /**
  * @swagger
+ * /api/posts/userposts:
+ *   get:
+ *     tags:
+ *       - Posts
+ *     summary: Get paginated user posts
+ *     description: Retrieve paginated posts of type 'user' with reaction and engagement statistics.
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (for pagination)
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *           maximum: 50
+ *         description: Number of posts per page (max 50)
+ *     responses:
+ *       200:
+ *         description: List of paginated user posts with stats
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 userPosts:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       title:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       author:
+ *                         type: string
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       type:
+ *                         type: string
+ *                       totalReactions:
+ *                         type: integer
+ *                       likes:
+ *                         type: integer
+ *                       dislikes:
+ *                         type: integer
+ *                       laughs:
+ *                         type: integer
+ *                       angers:
+ *                         type: integer
+ *                       comments:
+ *                         type: integer
+ *                       shares:
+ *                         type: integer
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     pageSize:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       500:
+ *         description: Could not fetch posts
+ */
+
+router.get('/userposts', async (req, res) => {
+    try {
+        // Parse pagination params with defaults and limits
+        const page = parseInt(req.query.page, 10) || 1;
+        const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 20, 50); // Lower max for better performance
+        const offset = (page - 1) * pageSize;
+
+        // Get total count and paginated results (with only necessary fields)
+        const { count, rows: userPosts } = await db.posts.findAndCountAll({
+            attributes: [
+                'id',
+                'title',
+                'description',
+                'author',
+                'createdAt',
+                'type',
+            ],
+            where: { type: 'user' },
+            order: [['createdAt', 'DESC']],
+            limit: pageSize,
+            offset,
+        });
+
+        // More efficient query for stats - use a single query with aggregation if possible
+        const postIds = userPosts.map((post) => post.id);
+
+        // Get all reactions counts in a single query
+        const reactionCounts = await db.post_reactions.findAll({
+            attributes: [
+                'postId',
+                'reaction',
+                [db.sequelize.fn('count', db.sequelize.col('id')), 'count'],
+            ],
+            where: { postId: postIds },
+            group: ['postId', 'reaction'],
+        });
+
+        // Get comments counts in a single query
+        const commentCounts = await db.post_comments.findAll({
+            attributes: [
+                'postId',
+                [db.sequelize.fn('count', db.sequelize.col('id')), 'count'],
+            ],
+            where: { postId: postIds },
+            group: ['postId'],
+        });
+
+        // Get share counts in a single query
+        const shareCounts = await db.post_shares.findAll({
+            attributes: [
+                'postId',
+                [db.sequelize.fn('count', db.sequelize.col('id')), 'count'],
+            ],
+            where: { postId: postIds },
+            group: ['postId'],
+        });
+
+        // Map the counts to each post
+        const postsWithStats = userPosts.map((post) => {
+            const postId = post.id;
+            const { abstract, content, ...postData } = post.toJSON();
+
+            // Get reaction counts for this post
+            const likes =
+                reactionCounts.find(
+                    (r) => r.postId === postId && r.reaction === 'like'
+                )?.count || 0;
+            const dislikes =
+                reactionCounts.find(
+                    (r) => r.postId === postId && r.reaction === 'dislike'
+                )?.count || 0;
+            const laughs =
+                reactionCounts.find(
+                    (r) => r.postId === postId && r.reaction === 'laugh'
+                )?.count || 0;
+            const angers =
+                reactionCounts.find(
+                    (r) => r.postId === postId && r.reaction === 'anger'
+                )?.count || 0;
+
+            // Get comment count for this post
+            const comments =
+                commentCounts.find((c) => c.postId === postId)?.count || 0;
+
+            // Get share count for this post
+            const shares =
+                shareCounts.find((s) => s.postId === postId)?.count || 0;
+
+            const totalReactions = likes + dislikes + laughs + angers;
+            console.log(`\n\nPost ${postId} totalReactions:`, totalReactions);
+
+            return {
+                ...postData,
+                totalReactions,
+                likes,
+                dislikes,
+                laughs,
+                angers,
+                comments,
+                shares,
+            };
+        });
+
+        res.status(200).json({
+            userPosts: postsWithStats,
+            pagination: {
+                total: count,
+                page,
+                pageSize,
+                totalPages: Math.ceil(count / pageSize),
+            },
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not fetch posts' });
+    }
+});
+
+/**
+ * @swagger
  * /api/posts/reaction:
  *   put:
  *     tags:
@@ -505,7 +700,7 @@ router.post('/user-publish', authenticate, async (req, res) => {
         const { title, content } = req.body;
         const userId = req.userId;
 
-        if (!userId || !title ) {
+        if (!userId || !title) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
@@ -527,6 +722,93 @@ router.post('/user-publish', authenticate, async (req, res) => {
     } catch (err) {
         console.error('/publish/usertype error:', err);
         res.status(500).json({ error: 'Could not create post' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/posts/{postId}:
+ *   delete:
+ *     tags:
+ *       - Posts
+ *     summary: Delete a post by ID
+ *     description: Deletes a post if the authenticated user is the owner of the post.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the post to delete
+ *     responses:
+ *       200:
+ *         description: Post deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       403:
+ *         description: Not authorized to delete this post
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       404:
+ *         description: Post not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+
+router.delete('/:postId', authenticate, async (req, res) => {
+    const { postId } = req.params;
+    let userId;
+
+    if (process.env.NODE_ENV === 'development') {
+        userId = req.query?.userId || req.user?.id;
+    } else {
+        userId = req.user?.id;
+    }
+
+    try {
+        const post = await db.posts.findByPk(postId);
+
+        if (!post) {
+            return res.status(404).json({ error: 'Post not found' });
+        }
+
+        if (post.userId !== userId) {
+            return res
+                .status(403)
+                .json({ error: 'You are not authorized to delete this post' });
+        }
+
+        await post.destroy();
+        return res.status(200).json({ message: 'Post deleted successfully' });
+    } catch (err) {
+        console.error('/:postId delete error: ', err);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
