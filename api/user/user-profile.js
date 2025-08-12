@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import db from '../../models/index.js';
-import upload from '../../lib/upload.js';
+import { uploadProfileImage } from '../../lib/upload.js';
 import authenticate from '../../lib/authenticate.js';
 import path from 'path';
 import fs from 'fs';
@@ -53,7 +53,7 @@ const router = Router();
 router.post(
     '/profile/picture',
     authenticate,
-    upload.single('file'),
+    uploadProfileImage.single('file'),
     async (req, res) => {
         try {
             // Save relative path

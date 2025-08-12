@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import db from '../../models/index.js';
+import { uploadPostImage } from '../../lib/upload.js';
 import authenticate from '../../lib/authenticate.js';
 
 const router = Router();
@@ -255,6 +256,8 @@ router.get('/papers', async (req, res) => {
  *                         type: string
  *                       author:
  *                         type: string
+ *                       imgSrc:
+ *                         type: string
  *                       createdAt:
  *                         type: string
  *                         format: date-time
@@ -305,6 +308,7 @@ router.get('/userposts', async (req, res) => {
                 'author',
                 'createdAt',
                 'type',
+                'image',
             ],
             where: { type: 'user' },
             order: [['createdAt', 'DESC']],
@@ -349,7 +353,7 @@ router.get('/userposts', async (req, res) => {
         // Map the counts to each post
         const postsWithStats = userPosts.map((post) => {
             const postId = post.id;
-            const { abstract, content, ...postData } = post.toJSON();
+            const { abstract, content, image, ...postData } = post.toJSON();
 
             // Get reaction counts for this post
             const likes =
@@ -382,6 +386,7 @@ router.get('/userposts', async (req, res) => {
 
             return {
                 ...postData,
+                imgSrc: image ? image : null,
                 totalReactions,
                 likes,
                 dislikes,
@@ -695,35 +700,46 @@ router.get('/:postId', async (req, res) => {
  *         description: Could not create post
  */
 
-router.post('/user-publish', authenticate, async (req, res) => {
-    try {
-        const { title, content } = req.body;
-        const userId = req.userId;
+router.post(
+    '/user-publish',
+    authenticate,
+    uploadPostImage.single('image'),
+    async (req, res) => {
+        try {
+            const { title, content } = req.body;
+            const userId = req.userId;
+            const imageFile = req.file;
 
-        if (!userId || !title) {
-            return res.status(400).json({ error: 'Missing required fields' });
+            if (!userId || !title) {
+                return res
+                    .status(400)
+                    .json({ error: 'Missing required fields' });
+            }
+
+            // Fetch user from DB to get username
+            const user = await db.users.findUserById({ id: userId });
+            if (!user) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            const newPost = await db.posts.create({
+                userId,
+                type: 'user',
+                title,
+                description: content,
+                author: user.username,
+                image: imageFile
+                    ? `uploads/post-images/${imageFile.filename}`
+                    : null,
+            });
+
+            res.status(201).json({ message: 'Post created', post: newPost });
+        } catch (err) {
+            console.error('/publish/usertype error:', err);
+            res.status(500).json({ error: 'Could not create post' });
         }
-
-        // Fetch user from DB to get username
-        const user = await db.users.findUserById({ id: userId });
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        const newPost = await db.posts.create({
-            userId,
-            type: 'user',
-            title,
-            description: content,
-            author: user.username, // Use username from DB
-        });
-
-        res.status(201).json({ message: 'Post created', post: newPost });
-    } catch (err) {
-        console.error('/publish/usertype error:', err);
-        res.status(500).json({ error: 'Could not create post' });
     }
-});
+);
 
 /**
  * @swagger
