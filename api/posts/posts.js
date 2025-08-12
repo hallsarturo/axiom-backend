@@ -786,11 +786,11 @@ router.delete('/:postId', authenticate, async (req, res) => {
     let userId;
 
     if (process.env.NODE_ENV === 'development') {
-        userId = req.query?.userId || req.user?.id;
+        userId = req.query?.userId || req.userId;
     } else {
-        userId = req.user?.id;
+        userId = req.userId;
     }
-
+    console.log('\n\nuser id: ', userId, 'post id: ', postId, '\n\n');
     try {
         const post = await db.posts.findByPk(postId);
 
