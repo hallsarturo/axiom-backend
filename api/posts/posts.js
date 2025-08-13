@@ -3,6 +3,8 @@ import db from '../../models/index.js';
 import { uploadPostImage } from '../../lib/upload.js';
 import authenticate from '../../lib/authenticate.js';
 import { getUserProfilePic } from '../../lib/user-utils.js';
+import path from 'path';
+import fs from 'fs';
 
 const router = Router();
 
@@ -723,7 +725,6 @@ router.post(
         try {
             const { title, content } = req.body;
             const userId = req.userId;
-            const imageFile = req.file;
 
             if (!userId || !title) {
                 return res
@@ -731,7 +732,7 @@ router.post(
                     .json({ error: 'Missing required fields' });
             }
 
-            // Fetch user from DB to get username
+            // Create post first (without image)
             const user = await db.users.findUserById({ id: userId });
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });
@@ -743,10 +744,23 @@ router.post(
                 title,
                 description: content,
                 author: user.username,
-                image: imageFile
-                    ? `uploads/post-images/${imageFile.filename}`
-                    : null,
+                image: null, // will update after image upload
             });
+
+            // If image uploaded, rename and update post
+            if (req.file) {
+                const ext = path.extname(req.file.originalname);
+                const newFilename = `post_${userId}_${newPost.id}${ext}`;
+                const oldPath = req.file.path;
+                const newPath = path.join(req.file.destination, newFilename);
+
+                // Rename file
+                fs.renameSync(oldPath, newPath);
+
+                // Update post with image path
+                newPost.image = `uploads/post-images/${newFilename}`;
+                await newPost.save();
+            }
 
             res.status(201).json({ message: 'Post created', post: newPost });
         } catch (err) {
