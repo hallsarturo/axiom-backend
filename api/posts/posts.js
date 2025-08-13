@@ -762,7 +762,13 @@ router.post(
                 await newPost.save();
             }
 
-            res.status(201).json({ message: 'Post created', post: newPost });
+            // Reload the post to get the updated image field
+            const postWithImage = await db.posts.findByPk(newPost.id);
+
+            res.status(201).json({
+                message: 'Post created',
+                post: postWithImage,
+            });
         } catch (err) {
             console.error('/publish/usertype error:', err);
             res.status(500).json({ error: 'Could not create post' });
