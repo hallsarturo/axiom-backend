@@ -310,7 +310,7 @@ router.use('/', async (req, res) => {
     if (provider) {
         responseUser.displayName = provider.displayName;
         responseUser.photoUrl = user.userProfilePic
-            ? process.env.BACKEND_URL + user.userProfilePic
+            ? user.userProfilePic
             : provider.photoUrl;
         responseUser.username = provider.displayName
             ? provider.displayName

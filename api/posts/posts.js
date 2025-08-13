@@ -2,6 +2,7 @@ import { Router } from 'express';
 import db from '../../models/index.js';
 import { uploadPostImage } from '../../lib/upload.js';
 import authenticate from '../../lib/authenticate.js';
+import { getUserProfilePic } from '../../lib/user-utils.js';
 
 const router = Router();
 
@@ -258,6 +259,8 @@ router.get('/papers', async (req, res) => {
  *                         type: string
  *                       imgSrc:
  *                         type: string
+ *                       authorProfilePic:
+ *                         type: string
  *                       createdAt:
  *                         type: string
  *                         format: date-time
@@ -309,6 +312,7 @@ router.get('/userposts', async (req, res) => {
                 'createdAt',
                 'type',
                 'image',
+                'userId',
             ],
             where: { type: 'user' },
             order: [['createdAt', 'DESC']],
@@ -351,51 +355,62 @@ router.get('/userposts', async (req, res) => {
         });
 
         // Map the counts to each post
-        const postsWithStats = userPosts.map((post) => {
-            const postId = post.id;
-            const { abstract, content, image, ...postData } = post.toJSON();
+        const postsWithStats = await Promise.all(
+            userPosts.map(async (post) => {
+                const postId = post.id;
+                const { abstract, content, image, userId, ...postData } =
+                    post.toJSON();
 
-            // Get reaction counts for this post
-            const likes =
-                reactionCounts.find(
-                    (r) => r.postId === postId && r.reaction === 'like'
-                )?.count || 0;
-            const dislikes =
-                reactionCounts.find(
-                    (r) => r.postId === postId && r.reaction === 'dislike'
-                )?.count || 0;
-            const laughs =
-                reactionCounts.find(
-                    (r) => r.postId === postId && r.reaction === 'laugh'
-                )?.count || 0;
-            const angers =
-                reactionCounts.find(
-                    (r) => r.postId === postId && r.reaction === 'anger'
-                )?.count || 0;
+                // Get user (author's) profile pic from posts userId
+                const profilePic = await getUserProfilePic(userId);
 
-            // Get comment count for this post
-            const comments =
-                commentCounts.find((c) => c.postId === postId)?.count || 0;
+                // Get reaction counts for this post
+                const likes =
+                    reactionCounts.find(
+                        (r) => r.postId === postId && r.reaction === 'like'
+                    )?.count || 0;
+                const dislikes =
+                    reactionCounts.find(
+                        (r) => r.postId === postId && r.reaction === 'dislike'
+                    )?.count || 0;
+                const laughs =
+                    reactionCounts.find(
+                        (r) => r.postId === postId && r.reaction === 'laugh'
+                    )?.count || 0;
+                const angers =
+                    reactionCounts.find(
+                        (r) => r.postId === postId && r.reaction === 'anger'
+                    )?.count || 0;
 
-            // Get share count for this post
-            const shares =
-                shareCounts.find((s) => s.postId === postId)?.count || 0;
+                // Get comment count for this post
+                const comments =
+                    commentCounts.find((c) => c.postId === postId)?.count || 0;
 
-            const totalReactions = likes + dislikes + laughs + angers;
-            console.log(`\n\nPost ${postId} totalReactions:`, totalReactions);
+                // Get share count for this post
+                const shares =
+                    shareCounts.find((s) => s.postId === postId)?.count || 0;
 
-            return {
-                ...postData,
-                imgSrc: image ? image : null,
-                totalReactions,
-                likes,
-                dislikes,
-                laughs,
-                angers,
-                comments,
-                shares,
-            };
-        });
+                const totalReactions = likes + dislikes + laughs + angers;
+                console.log(
+                    `\n\nPost ${postId} totalReactions:`,
+                    totalReactions
+                );
+
+                return {
+                    ...postData,
+                    imgSrc: image ? image : null,
+                    authorProfilePic: profilePic,
+                    totalReactions,
+                    likes,
+                    dislikes,
+                    laughs,
+                    angers,
+                    comments,
+                    shares,
+                };
+            })
+        );
+        console.log('userPosts response:', postsWithStats); // Debug output
 
         res.status(200).json({
             userPosts: postsWithStats,
