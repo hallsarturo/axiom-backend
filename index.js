@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import express from 'express';
 import morgan from 'morgan';
 import session from 'express-session';
+import * as rfs from 'rotating-file-stream';
 import fs from 'node:fs';
 import path from 'path';
 import http from 'http';
@@ -58,10 +59,13 @@ if (dbConfig.use_env_variable) {
 
 // MIDDLEWARE
 // Logging:
-const accessLogStream = fs.createWriteStream(
-    path.join(process.cwd(), 'access.log'),
-    { flags: 'a' }
-);
+const accessLogStream = rfs.createStream('access.log', {
+    interval: '1d',
+    path: path.join(process.cwd(), 'log'),
+    maxFiles: 7,
+    size: '10M', // rotate after 10MB
+    compress: 'gzip',
+});
 app.use(morgan('combined', { stream: accessLogStream }));
 // JSON Parse
 app.use(express.json());
@@ -143,7 +147,10 @@ app.use(
     passport.authenticate('jwt', { session: false }),
     userProfileRouter
 );
-app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
+app.use(
+    '/uploads',
+    express.static(path.join(process.cwd(), 'public', 'uploads'))
+);
 app.use('/api/posts', postsRouter);
 app.post('/api/logout', function (req, res, next) {
     req.logout(function (err) {
