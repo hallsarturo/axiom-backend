@@ -17,6 +17,7 @@ import { router as authRouter } from './api/auth/auth.js';
 import { router as userProfileRouter } from './api/user/user-profile.js';
 import { router as dashboardRouter } from './api/dashboard/dashboard.js';
 import { router as postsRouter } from './api/posts/posts.js';
+import { router as searchRouter } from './api/search/search.js';
 import Sequelize from 'sequelize';
 import helmet from 'helmet';
 import './api/auth/auth.js';
@@ -151,6 +152,7 @@ app.use(
     '/uploads',
     express.static(path.join(process.cwd(), 'public', 'uploads'))
 );
+app.use('/api/search', searchRouter);
 app.use('/api/posts', postsRouter);
 app.post('/api/logout', function (req, res, next) {
     req.logout(function (err) {

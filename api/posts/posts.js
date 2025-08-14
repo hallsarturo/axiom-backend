@@ -863,4 +863,91 @@ router.delete('/:postId', authenticate, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/posts/bookmark/{postId}:
+ *   put:
+ *     tags:
+ *       - Posts
+ *     summary: Bookmark or unmark a post
+ *     description: Toggles a bookmark for the authenticated user on the specified post. If the post is already bookmarked, it will be removed; otherwise, it will be added.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the post to bookmark or unmark
+ *     responses:
+ *       200:
+ *         description: Bookmark removed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       201:
+ *         description: Bookmark added
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Post not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+
+router.put('/bookmark/:postId', authenticate, async (req, res) => {
+    const { postId } = req.params;
+    const userId = req.userId;
+
+    try {
+        // Check if post exists
+        const post = await db.posts.findByPk(postId);
+        if (!post) {
+            return res.status(404).json({ error: 'Post not found' });
+        }
+
+        // Check if bookmark exists for this user and post
+        const bookmark = await db.post_bookmarks.findOne({
+            where: { postId, userId },
+        });
+
+        if (bookmark) {
+            // If exists, remove bookmark (unmark)
+            await bookmark.destroy();
+            return res.status(200).json({ message: 'Bookmark removed' });
+        } else {
+            // If not exists, create bookmark
+            await db.post_bookmarks.create({ postId, userId });
+            return res.status(201).json({ message: 'Bookmark added' });
+        }
+    } catch (err) {
+        console.error('/bookmark/:postId put error: ', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 export { router };
