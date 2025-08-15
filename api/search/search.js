@@ -71,11 +71,13 @@ router.get('/', async (req, res) => {
         id: u.id,
         type: 'user',
         username: u.username,
+        key: `user-${u.id}`, // unique key for React
     }));
     const postResults = posts.map((p) => ({
         id: p.id,
         type: 'post',
         title: p.title,
+        key: `post-${p.id}`, // unique key for React
     }));
 
     res.json({ results: [...userResults, ...postResults] });
