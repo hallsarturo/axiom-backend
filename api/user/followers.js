@@ -103,21 +103,25 @@ router.get('/:userId', async (req, res) => {
 
 // GET: Get users this user is following
 router.get('/:userId/following', async (req, res) => {
-    const userId = Number(req.params.userId);
-    const following = await db.user_followers.findAll({
-        where: { followerId: userId },
-        include: [
-            {
-                model: db.users,
-                as: 'following',
-                attributes: ['id', 'username'],
-            },
-        ],
-    });
-    res.json({
-        following: following.map((f) => f.following),
-        totalFollowins: following.length,
-    });
+    try {
+        const userId = Number(req.params.userId);
+        const following = await db.user_followers.findAll({
+            where: { followerId: userId },
+            include: [
+                {
+                    model: db.users,
+                    as: 'following',
+                    attributes: ['id', 'username'],
+                },
+            ],
+        });
+        res.json({
+            following: following.map((f) => f.following),
+            totalFollowins: following.length,
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch following' });
+    }
 });
 
 /**
@@ -169,24 +173,30 @@ router.get('/:userId/following', async (req, res) => {
 
 // PUT: Follow/unfollow a user
 router.put('/:targetUserId', authenticate, async (req, res) => {
-    const followerId = req.userId;
-    const followingId = Number(req.params.targetUserId);
+    try {
+        const followerId = req.userId;
+        const followingId = Number(req.params.targetUserId);
 
-    if (followerId === followingId) {
-        return res.status(400).json({ error: "You can't follow yourself." });
-    }
+        if (followerId === followingId) {
+            return res
+                .status(400)
+                .json({ error: "You can't follow yourself." });
+        }
 
-    // Check if already following
-    const existing = await db.user_followers.findOne({
-        where: { followerId, followingId },
-    });
+        // Check if already following
+        const existing = await db.user_followers.findOne({
+            where: { followerId, followingId },
+        });
 
-    if (existing) {
-        await existing.destroy();
-        return res.status(200).json({ message: 'Unfollowed user.' });
-    } else {
-        await db.user_followers.create({ followerId, followingId });
-        return res.status(201).json({ message: 'Followed user.' });
+        if (existing) {
+            await existing.destroy();
+            return res.status(200).json({ message: 'Unfollowed user.' });
+        } else {
+            await db.user_followers.create({ followerId, followingId });
+            return res.status(201).json({ message: 'Followed user.' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to follow/unfollow user' });
     }
 });
 
