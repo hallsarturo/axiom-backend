@@ -15,6 +15,7 @@ import { router as loginRouter } from './api/auth/login.js';
 import { router as signupRouter } from './api/auth/signup.js';
 import { router as authRouter } from './api/auth/auth.js';
 import { router as userProfileRouter } from './api/user/user-profile.js';
+import { router as userFollowersRouter } from './api/user/followers.js';
 import { router as dashboardRouter } from './api/dashboard/dashboard.js';
 import { router as postsRouter } from './api/posts/posts.js';
 import { router as searchRouter } from './api/search/search.js';
@@ -144,6 +145,7 @@ app.use('/api/signup', signupRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/user', userProfileRouter);
+app.use('/api/user/followers', userFollowersRouter);
 app.use(
     '/uploads',
     express.static(path.join(process.cwd(), 'public', 'uploads'))
