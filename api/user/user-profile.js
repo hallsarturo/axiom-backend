@@ -159,6 +159,146 @@ router.put('/preferences', authenticate, async (req, res) => {
 
 /**
  * @swagger
+ * /api/user/{userId}:
+ *   get:
+ *     tags:
+ *       - User
+ *     summary: Get public user profile
+ *     description: Returns the public profile for the specified user, including displayName, photoUrl, about, degree level, and preferred categories if available.
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the user to fetch
+ *     responses:
+ *       200:
+ *         description: Public user profile data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     username:
+ *                       type: string
+ *                     id:
+ *                       type: integer
+ *                     displayName:
+ *                       type: string
+ *                     photoUrl:
+ *                       type: string
+ *                     about:
+ *                       type: string
+ *                     userProfilePic:
+ *                       type: string
+ *                       nullable: true
+ *                     degreeLevel:
+ *                       type: object
+ *                       nullable: true
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                         imgSrc:
+ *                           type: string
+ *                         imgAlt:
+ *                           type: string
+ *                     categories:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+
+// filepath: /Users/proal-mac/Code/AxiomLabs/Axiom/back/axiom-backend/api/user/user-profile.js
+
+router.get('/:userId', async (req, res) => {
+    try {
+        const userId = Number(req.params.userId);
+        const user = await db.users.findUserById({ id: userId });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const provider = await db.auth_providers.findOne({
+            where: { userId: user.id },
+        });
+
+        let degreeLevel = null;
+        const userPref = await db.user_preferences.findOne({
+            where: { userId: user.id },
+            include: [
+                {
+                    model: db.degree_levels,
+                    attributes: ['id', 'name', 'imgSrc', 'imgAlt'],
+                },
+            ],
+        });
+        if (userPref && userPref.degree_level) {
+            degreeLevel = {
+                id: userPref.degree_level.id,
+                name: userPref.degree_level.name,
+                imgSrc: userPref.degree_level.imgSrc,
+                imgAlt: userPref.degree_level.imgAlt,
+            };
+        }
+
+        const categoryPrefs = await db.user_category_preferences.findAll({
+            where: { userId: user.id },
+            include: [{ model: db.categories, attributes: ['id', 'name'] }],
+        });
+        const categories = categoryPrefs.map((pref) => ({
+            id: pref.category?.id,
+            name: pref.category?.name,
+        }));
+
+        let responseUser = {
+            username: user.username,
+            id: user.id,
+            about:
+                user.about && user.about.trim() !== ''
+                    ? String(user.about)
+                    : null,
+            degreeLevel,
+            categories,
+            userProfilePic: user.userProfilePic || null,
+        };
+        if (provider) {
+            responseUser.displayName = provider.displayName;
+            responseUser.photoUrl = user.userProfilePic
+                ? user.userProfilePic
+                : provider.photoUrl;
+            responseUser.username = provider.displayName
+                ? provider.displayName
+                : user.username;
+        }
+        res.status(200).json({ success: true, user: responseUser });
+    } catch (err) {
+        console.error('Public user profile error:', err);
+        res.status(500).json({ error: 'Failed to fetch user profile' });
+    }
+});
+
+/**
+ * @swagger
  * /api/user:
  *   get:
  *     tags:
@@ -219,104 +359,74 @@ router.put('/preferences', authenticate, async (req, res) => {
  *         description: User not found
  */
 
-router.use('/', async (req, res) => {
-    // logging debug
-    // console.log('Headers:', req.headers);
-    // console.log('Cookies:', req.cookies);
-    // console.log('Body:', req.body);
-
-    // Check user authorization
-    let token;
-    if (process.env.NODE_ENV === 'production') {
-        // In production, extract token from cookie
-        token = req.cookies.token;
-    } else {
-        // In development, extract token from Authorization header (sent from localStorage)
-        const authHeader = req.headers.authorization;
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            token = authHeader.replace('Bearer ', '');
-            // console.log('token: ', token);
-        } else {
-            // console.log('entered cookies ');
-            token = req.cookies.token; // fallback if sent as cookie
-        }
-    }
-
-    if (!token) {
-        return res.status(401).json({ error: 'No token provided' });
-    }
-
-    // Decode token and extract user id
-    let payload;
+router.use('/', authenticate, async (req, res) => {
     try {
-        payload = jwt.verify(token, 'secret');
-    } catch (err) {
-        return res.status(401).json({ error: 'Invalid or expired token' });
-    }
+        // Find user by id from middleware
+        const user = await db.users.findUserById({ id: req.userId });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
-    // Find user by id
-    const user = await db.users.findUserById({ id: payload.id });
-    // console.log('user: ', user);
-    if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-    }
+        // Check if user exists in auth_providers
+        const provider = await db.auth_providers.findOne({
+            where: { userId: user.id },
+        });
 
-    // Check if user exists in auth_providers
-    const provider = await db.auth_providers.findOne({
-        where: { userId: user.id },
-    });
+        // Add user's degree level
+        let degreeLevel = null;
+        const userPref = await db.user_preferences.findOne({
+            where: { userId: user.id },
+            include: [
+                {
+                    model: db.degree_levels,
+                    attributes: ['id', 'name', 'imgSrc', 'imgAlt'],
+                },
+            ],
+        });
+        if (userPref && userPref.degree_level) {
+            degreeLevel = {
+                id: userPref.degree_level.id,
+                name: userPref.degree_level.name,
+                imgSrc: userPref.degree_level.imgSrc,
+                imgAlt: userPref.degree_level.imgAlt,
+            };
+        }
 
-    // Add user's degree level
-    let degreeLevel = null;
-    const userPref = await db.user_preferences.findOne({
-        where: { userId: user.id },
-        include: [
-            {
-                model: db.degree_levels,
-                attributes: ['id', 'name', 'imgSrc', 'imgAlt'],
-            },
-        ],
-    });
-    if (userPref && userPref.degree_level) {
-        degreeLevel = {
-            id: userPref.degree_level.id,
-            name: userPref.degree_level.name,
-            imgSrc: userPref.degree_level.imgSrc,
-            imgAlt: userPref.degree_level.imgAlt,
+        // Add User's category preferences
+        const categoryPrefs = await db.user_category_preferences.findAll({
+            where: { userId: user.id },
+            include: [{ model: db.categories, attributes: ['id', 'name'] }],
+        });
+        const categories = categoryPrefs.map((pref) => ({
+            id: pref.category?.id,
+            name: pref.category?.name,
+        }));
+
+        let responseUser = {
+            username: user.username,
+            id: user.id,
+            about:
+                user.about && user.about.trim() !== ''
+                    ? String(user.about)
+                    : null,
+            degreeLevel,
+            categories,
+            userProfilePic: user.userProfilePic || null,
         };
+        if (provider) {
+            responseUser.displayName = provider.displayName;
+            responseUser.photoUrl = user.userProfilePic
+                ? user.userProfilePic
+                : provider.photoUrl;
+            responseUser.username = provider.displayName
+                ? provider.displayName
+                : user.username;
+        }
+        res.status(200).json({ user: responseUser });
+    } catch (err) {
+        console.error('User profile error:', err);
+        res.status(500).json({ error: 'Failed to fetch user profile' });
     }
-
-    // Add User's category preferences
-    const categoryPrefs = await db.user_category_preferences.findAll({
-        where: { userId: user.id },
-        include: [{ model: db.categories, attributes: ['id', 'name'] }],
-    });
-    const categories = categoryPrefs.map((pref) => ({
-        id: pref.category?.id,
-        name: pref.category?.name,
-    }));
-
-    console.log('categories: ', categories)
-    
-    let responseUser = {
-        username: user.username,
-        id: user.id,
-        about:
-            user.about && user.about.trim() !== '' ? String(user.about) : null,
-        degreeLevel,
-        categories,
-        userProfilePic: user.userProfilePic || null,
-    };
-    if (provider) {
-        responseUser.displayName = provider.displayName;
-        responseUser.photoUrl = user.userProfilePic
-            ? user.userProfilePic
-            : provider.photoUrl;
-        responseUser.username = provider.displayName
-            ? provider.displayName
-            : user.username;
-    }
-    res.status(200).json({ user: responseUser });
 });
 
 export { router };

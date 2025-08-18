@@ -143,11 +143,7 @@ app.use('/api/login', loginRouter);
 app.use('/api/signup', signupRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/dashboard', dashboardRouter);
-app.use(
-    '/api/user',
-    passport.authenticate('jwt', { session: false }),
-    userProfileRouter
-);
+app.use('/api/user', userProfileRouter);
 app.use(
     '/uploads',
     express.static(path.join(process.cwd(), 'public', 'uploads'))
