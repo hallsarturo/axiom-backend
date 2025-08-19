@@ -253,6 +253,8 @@ router.get('/papers', async (req, res) => {
  *                     properties:
  *                       id:
  *                         type: integer
+ *                       userId:
+ *                         type: integer
  *                       title:
  *                         type: string
  *                       description:
@@ -400,6 +402,7 @@ router.get('/userposts', async (req, res) => {
 
                 return {
                     ...postData,
+                    userId,
                     imgSrc: image ? image : null,
                     authorProfilePic: profilePic,
                     totalReactions,
