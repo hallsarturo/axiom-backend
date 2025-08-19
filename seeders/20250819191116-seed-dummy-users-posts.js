@@ -3,7 +3,7 @@ import { faker } from '@faker-js/faker';
 export async function up(queryInterface) {
     const users = [];
     const posts = [];
-    const password = await bcrypt.hash('TestPassword123', 10);
+    const password = faker.internet.password({ length: 12 });
 
     for (let i = 0; i < 10; i++) {
         const username = faker.person.fullName().toLowerCase();
@@ -29,14 +29,14 @@ export async function up(queryInterface) {
     );
 
     for (const user of insertedUsers) {
-        const numPosts = faker.datatype.number({ min: 10, max: 25 });
+        const numPosts = faker.number.int({ min: 10, max: 25 });
         for (let j = 0; j < numPosts; j++) {
             posts.push({
                 userId: user.id,
                 type: 'user',
                 title: faker.lorem.sentence({ min: 5, max: 12 }),
                 description: faker.lorem.paragraphs(2),
-                author: faker.person.fullName().findName(),
+                author: faker.person.fullName(),
                 image: faker.image.urlPicsumPhotos(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
