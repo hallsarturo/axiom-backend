@@ -59,6 +59,11 @@ router.get('/:userId', async (req, res) => {
             followers: followers.map((f) => f.follower),
             totalFollowers: followers.length,
         });
+         console.log(
+            'Followers:',
+            followers.map((f) => f.following)
+        );
+        console.log('TotalFollowers:', followers.length);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch followers' });
     }
@@ -115,10 +120,16 @@ router.get('/:userId/following', async (req, res) => {
                 },
             ],
         });
+
         res.json({
             following: following.map((f) => f.following),
-            totalFollowins: following.length,
+            totalFollowings: following.length,
         });
+        console.log(
+            'Following:',
+            following.map((f) => f.following)
+        );
+        console.log('TotalFollowings:', following.length);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch following' });
     }

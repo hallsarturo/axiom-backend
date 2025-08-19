@@ -79,9 +79,21 @@ export default (sequelize, DataTypes) => {
                 allowNull: true,
                 comment: 'Relative path to user profile picture',
             },
+            createdAt: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                defaultValue: DataTypes.NOW,
+                comment: 'Date when the user account was created',
+            },
+            updatedAt: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                defaultValue: DataTypes.NOW,
+                comment: 'Date when the user account was last updated',
+            },
         },
         {
-            timestamps: false,
+            timestamps: true,
         }
     );
 

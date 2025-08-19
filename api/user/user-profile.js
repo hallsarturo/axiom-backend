@@ -273,6 +273,8 @@ router.get('/:userId', async (req, res) => {
         let responseUser = {
             username: user.username,
             id: user.id,
+            email: user.email,
+            createdAt: user.createdAt,
             about:
                 user.about && user.about.trim() !== ''
                     ? String(user.about)

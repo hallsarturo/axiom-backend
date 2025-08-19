@@ -660,6 +660,130 @@ router.get('/:postId', async (req, res) => {
 
 /**
  * @swagger
+ * /api/posts/user/{userId}:
+ *   get:
+ *     tags:
+ *       - Posts
+ *     summary: Get paginated posts by user ID
+ *     description: Returns paginated posts created by the specified user. No authentication required.
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the user whose posts to fetch
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (for pagination)
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *           maximum: 50
+ *         description: Number of posts per page (max 50)
+ *     responses:
+ *       200:
+ *         description: List of paginated posts by user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 posts:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       title:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       author:
+ *                         type: string
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       type:
+ *                         type: string
+ *                       image:
+ *                         type: string
+ *                 totalCount:
+ *                   type: integer
+ *                   description: Total number of posts by this user
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     pageSize:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       404:
+ *         description: No posts found for user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+
+router.get('/user/:userId', async (req, res) => {
+    try {
+        const userId = Number(req.params.userId);
+        const page = parseInt(req.query.page, 10) || 1;
+        const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 20, 50);
+        const offset = (page - 1) * pageSize;
+
+        const { count, rows: posts } = await db.posts.findAndCountAll({
+            where: { userId },
+            order: [['createdAt', 'DESC']],
+            attributes: [
+                'id',
+                'title',
+                'description',
+                'author',
+                'createdAt',
+                'type',
+                'image',
+            ],
+            limit: pageSize,
+            offset,
+        });
+
+        if (!posts || posts.length === 0) {
+            return res.status(404).json({ error: 'No posts found for user' });
+        }
+
+        res.status(200).json({
+            posts,
+            totalCount: count,
+            pagination: {
+                total: count,
+                page,
+                pageSize,
+                totalPages: Math.ceil(count / pageSize),
+            },
+        });
+    } catch (err) {
+        console.error('/user/:userId posts error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+/**
+ * @swagger
  * /api/posts/user-publish:
  *   post:
  *     tags:
