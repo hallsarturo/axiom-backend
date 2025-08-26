@@ -9,18 +9,18 @@ const router = Router();
  *   get:
  *     tags:
  *       - Search
- *     summary: Global search for users and posts
- *     description: Search users by username and posts by title. Returns a combined list of results.
+ *     summary: Search users, paper authors, and posts
+ *     description: Returns matching users, paper authors, and posts for a given query string.
  *     parameters:
  *       - in: query
  *         name: q
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
- *         description: Search query string
+ *         description: The search query string
  *     responses:
  *       200:
- *         description: Search results for users and posts
+ *         description: Search results for users, paper authors, and posts
  *         content:
  *           application/json:
  *             schema:
@@ -29,19 +29,58 @@ const router = Router();
  *                 results:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                       type:
- *                         type: string
- *                         enum: [user, post]
- *                       username:
- *                         type: string
- *                         nullable: true
- *                       title:
- *                         type: string
- *                         nullable: true
+ *                     oneOf:
+ *                       - type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           type:
+ *                             type: string
+ *                             example: user
+ *                           username:
+ *                             type: string
+ *                           key:
+ *                             type: string
+ *                       - type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           type:
+ *                             type: string
+ *                             example: author
+ *                           author:
+ *                             type: string
+ *                           key:
+ *                             type: string
+ *                       - type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           type:
+ *                             type: string
+ *                             example: post
+ *                           title:
+ *                             type: string
+ *                           key:
+ *                             type: string
+ *       400:
+ *         description: Missing or invalid query parameter
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
 
 router.get('/', async (req, res) => {
@@ -54,6 +93,15 @@ router.get('/', async (req, res) => {
             username: { [db.Sequelize.Op.iLike]: `%${q}%` },
         },
         attributes: ['id', 'username'],
+        limit: 5,
+    });
+    // search paperAuthors by author name (case-insensitive)
+    const paperAuthors = await db.posts.findAll({
+        where: {
+            type: 'paper',
+            author: { [db.Sequelize.Op.iLike]: `%${q}%` },
+        },
+        attributes: ['id', 'author'],
         limit: 5,
     });
 
@@ -79,8 +127,14 @@ router.get('/', async (req, res) => {
         title: p.title,
         key: `post-${p.id}`, // unique key for React
     }));
+    const authorResults = paperAuthors.map((p) => ({
+        id: p.id,
+        type: 'author',
+        author: p.author,
+        key: `author-${p.id}`,
+    }));
 
-    res.json({ results: [...userResults, ...postResults] });
+    res.json({ results: [...userResults, ...authorResults, ...postResults] });
 });
 
 export { router };
