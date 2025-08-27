@@ -15,7 +15,7 @@ const router = Router();
  *     tags:
  *       - Posts
  *     summary: Get paginated paper posts
- *     description: Retrieve paginated posts of type 'paper' with reaction and engagement statistics. Supports infinite scrolling via pagination.
+ *     description: Retrieve paginated posts of type 'paper' with reaction and engagement statistics. Supports infinite scrolling via pagination. Optionally returns isBookmarked if userId is provided.
  *     parameters:
  *       - in: query
  *         name: page
@@ -30,6 +30,11 @@ const router = Router();
  *           default: 50
  *           maximum: 200
  *         description: Number of posts per page (max 200)
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: integer
+ *         description: Optional user ID to check if each post is bookmarked
  *     responses:
  *       200:
  *         description: List of paginated paper posts with stats
@@ -76,6 +81,9 @@ const router = Router();
  *                         type: integer
  *                       shares:
  *                         type: integer
+ *                       isBookmarked:
+ *                         type: boolean
+ *                         description: True if the post is bookmarked by the userId provided
  *                 pagination:
  *                   type: object
  *                   properties:
@@ -95,6 +103,30 @@ const router = Router();
 
 router.get('/papers', async (req, res) => {
     try {
+        let token;
+        if (process.env.NODE_ENV === 'production') {
+            token = req.cookies.token;
+        } else {
+            const authHeader = req.headers.authorization;
+            //console.log('authHeader:', authHeader);
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                token = authHeader.replace('Bearer ', '');
+            } else {
+                token = req.cookies.token;
+            }
+        }
+        const payload = jwt.verify(token, 'secret');
+        //console.log('payload:', payload);
+        const user = await db.users.findUserById({ id: payload.id });
+        //console.log('user: ', user);
+        if (!user) {
+            console.log('User not found');
+            return res.status(404).json({ error: 'User not found' });
+        }
+        //console.log('reached authenticate 2');
+        let userId = payload.id;
+        //console.log('\nauthenticate, re,userId: ', req.userId, '\n');
+
         // Parse pagination params with defaults and limits
         const page = parseInt(req.query.page, 10) || 1;
         const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 20, 50); // Lower max for better performance
@@ -151,6 +183,16 @@ router.get('/papers', async (req, res) => {
             group: ['postId'],
         });
 
+        // Get all bookmarks for this user in one query for efficiency
+        let bookmarkedPostIds = [];
+        if (userId) {
+            const bookmarks = await db.post_bookmarks.findAll({
+                where: { userId, postId: postIds },
+                attributes: ['postId'],
+            });
+            bookmarkedPostIds = bookmarks.map((b) => b.postId);
+        }
+
         // Map the counts to each post
         const postsWithStats = paperPosts.map((post) => {
             const postId = post.id;
@@ -186,7 +228,11 @@ router.get('/papers', async (req, res) => {
                 shareCounts.find((s) => s.postId === postId)?.count || 0;
 
             const totalReactions = likes + dislikes + laughs + angers;
-            console.log(`\n\nPost ${postId} totalReactions:`, totalReactions);
+            // console.log(`\n\nPost ${postId} totalReactions:`, totalReactions);
+
+            const isBookmarked = userId
+                ? bookmarkedPostIds.includes(postId)
+                : false;
 
             return {
                 ...postData,
@@ -198,6 +244,7 @@ router.get('/papers', async (req, res) => {
                 angers,
                 comments,
                 shares,
+                isBookmarked,
             };
         });
 
