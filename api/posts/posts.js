@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import db from '../../models/index.js';
+import jwt from 'jsonwebtoken'; // Make sure this is present
 import { uploadPostImage } from '../../lib/upload.js';
 import authenticate from '../../lib/authenticate.js';
 import { getUserProfilePic } from '../../lib/user-utils.js';
@@ -103,36 +104,36 @@ const router = Router();
 
 router.get('/papers', async (req, res) => {
     try {
+        let userId;
         let token;
+
+        // Try to extract token, but ignore if not present
         if (process.env.NODE_ENV === 'production') {
-            token = req.cookies.token;
+            token = req.cookies?.token;
         } else {
-            const authHeader = req.headers.authorization;
-            //console.log('authHeader:', authHeader);
+            const authHeader = req.headers?.authorization;
             if (authHeader && authHeader.startsWith('Bearer ')) {
                 token = authHeader.replace('Bearer ', '');
             } else {
-                token = req.cookies.token;
+                token = req.cookies?.token;
             }
         }
-        const payload = jwt.verify(token, 'secret');
-        //console.log('payload:', payload);
-        const user = await db.users.findUserById({ id: payload.id });
-        //console.log('user: ', user);
-        if (!user) {
-            console.log('User not found');
-            return res.status(404).json({ error: 'User not found' });
-        }
-        //console.log('reached authenticate 2');
-        let userId = payload.id;
-        //console.log('\nauthenticate, re,userId: ', req.userId, '\n');
 
-        // Parse pagination params with defaults and limits
+        // If token exists, extract userId, else leave undefined
+        if (token) {
+            try {
+                const payload = jwt.verify(token, 'secret');
+                userId = payload.id;
+            } catch (err) {
+                userId = undefined; // Invalid token, treat as not logged in
+            }
+        }
+
+        // Pagination
         const page = parseInt(req.query.page, 10) || 1;
-        const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 20, 50); // Lower max for better performance
+        const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 20, 50);
         const offset = (page - 1) * pageSize;
 
-        // Get total count and paginated results (with only necessary fields)
         const { count, rows: paperPosts } = await db.posts.findAndCountAll({
             attributes: [
                 'id',
@@ -149,10 +150,8 @@ router.get('/papers', async (req, res) => {
             offset,
         });
 
-        // More efficient query for stats - use a single query with aggregation if possible
         const postIds = paperPosts.map((post) => post.id);
 
-        // Get all reactions counts in a single query
         const reactionCounts = await db.post_reactions.findAll({
             attributes: [
                 'postId',
@@ -163,7 +162,6 @@ router.get('/papers', async (req, res) => {
             group: ['postId', 'reaction'],
         });
 
-        // Get comments counts in a single query
         const commentCounts = await db.post_comments.findAll({
             attributes: [
                 'postId',
@@ -173,7 +171,6 @@ router.get('/papers', async (req, res) => {
             group: ['postId'],
         });
 
-        // Get share counts in a single query
         const shareCounts = await db.post_shares.findAll({
             attributes: [
                 'postId',
@@ -183,7 +180,7 @@ router.get('/papers', async (req, res) => {
             group: ['postId'],
         });
 
-        // Get all bookmarks for this user in one query for efficiency
+        // Get bookmarks only if userId is present
         let bookmarkedPostIds = [];
         if (userId) {
             const bookmarks = await db.post_bookmarks.findAll({
@@ -193,7 +190,6 @@ router.get('/papers', async (req, res) => {
             bookmarkedPostIds = bookmarks.map((b) => b.postId);
         }
 
-        // Map the counts to each post
         const postsWithStats = paperPosts.map((post) => {
             const postId = post.id;
             const { abstract, content, ...postData } = post.toJSON();
@@ -201,7 +197,6 @@ router.get('/papers', async (req, res) => {
                 ? post.identifier.replace(/^oai:/, '')
                 : post.identifier;
 
-            // Get reaction counts for this post
             const likes =
                 reactionCounts.find(
                     (r) => r.postId === postId && r.reaction === 'like'
@@ -219,17 +214,14 @@ router.get('/papers', async (req, res) => {
                     (r) => r.postId === postId && r.reaction === 'anger'
                 )?.count || 0;
 
-            // Get comment count for this post
             const comments =
                 commentCounts.find((c) => c.postId === postId)?.count || 0;
-
-            // Get share count for this post
             const shares =
                 shareCounts.find((s) => s.postId === postId)?.count || 0;
 
             const totalReactions = likes + dislikes + laughs + angers;
-            // console.log(`\n\nPost ${postId} totalReactions:`, totalReactions);
 
+            // Only return isBookmarked if userId is present
             const isBookmarked = userId
                 ? bookmarkedPostIds.includes(postId)
                 : false;
