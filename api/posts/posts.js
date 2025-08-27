@@ -143,6 +143,8 @@ router.get('/papers', async (req, res) => {
                 'author',
                 'createdAt',
                 'type',
+                'image',
+                'userId',
             ],
             where: { type: 'paper' },
             order: [['createdAt', 'DESC']],
@@ -262,7 +264,7 @@ router.get('/papers', async (req, res) => {
  *     tags:
  *       - Posts
  *     summary: Get paginated user posts
- *     description: Retrieve paginated posts of type 'user' with reaction and engagement statistics.
+ *     description: Retrieve paginated posts of type 'user' with reaction and engagement statistics. If the user is authenticated, each post will include isBookmarked.
  *     parameters:
  *       - in: query
  *         name: page
@@ -323,6 +325,9 @@ router.get('/papers', async (req, res) => {
  *                         type: integer
  *                       shares:
  *                         type: integer
+ *                       isBookmarked:
+ *                         type: boolean
+ *                         description: True if the post is bookmarked by the authenticated user
  *                 pagination:
  *                   type: object
  *                   properties:
@@ -340,6 +345,31 @@ router.get('/papers', async (req, res) => {
 
 router.get('/userposts', async (req, res) => {
     try {
+        let userId;
+        let token;
+
+        // Try to extract token, but ignore if not present
+        if (process.env.NODE_ENV === 'production') {
+            token = req.cookies?.token;
+        } else {
+            const authHeader = req.headers?.authorization;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                token = authHeader.replace('Bearer ', '');
+            } else {
+                token = req.cookies?.token;
+            }
+        }
+
+        // If token exists, extract userId, else leave undefined
+        if (token) {
+            try {
+                const payload = jwt.verify(token, 'secret');
+                userId = payload.id;
+            } catch (err) {
+                userId = undefined; // Invalid token, treat as not logged in
+            }
+        }
+
         // Parse pagination params with defaults and limits
         const page = parseInt(req.query.page, 10) || 1;
         const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 20, 50); // Lower max for better performance
@@ -386,6 +416,16 @@ router.get('/userposts', async (req, res) => {
             where: { postId: postIds },
             group: ['postId'],
         });
+
+        // Get bookmarks only if userId is present
+        let bookmarkedPostIds = [];
+        if (userId) {
+            const bookmarks = await db.post_bookmarks.findAll({
+                where: { userId, postId: postIds },
+                attributes: ['postId'],
+            });
+            bookmarkedPostIds = bookmarks.map((b) => b.postId);
+        }
 
         // Get share counts in a single query
         const shareCounts = await db.post_shares.findAll({
@@ -439,6 +479,11 @@ router.get('/userposts', async (req, res) => {
                     totalReactions
                 );
 
+                // Only return isBookmarked if userId is present
+                const isBookmarked = userId
+                    ? bookmarkedPostIds.includes(postId)
+                    : false;
+
                 return {
                     ...postData,
                     userId,
@@ -451,6 +496,7 @@ router.get('/userposts', async (req, res) => {
                     angers,
                     comments,
                     shares,
+                    isBookmarked,
                 };
             })
         );
