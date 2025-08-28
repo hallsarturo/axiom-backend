@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import db from '../../models/index.js';
-import jwt from 'jsonwebtoken'; // Make sure this is present
+import jwt from 'jsonwebtoken'; 
 import { uploadPostImage } from '../../lib/upload.js';
 import authenticate from '../../lib/authenticate.js';
 import { getUserProfilePic } from '../../lib/user-utils.js';

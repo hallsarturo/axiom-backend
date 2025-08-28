@@ -18,6 +18,7 @@ import { router as userProfileRouter } from './api/user/user-profile.js';
 import { router as userFollowersRouter } from './api/user/followers.js';
 import { router as dashboardRouter } from './api/dashboard/dashboard.js';
 import { router as postsRouter } from './api/posts/posts.js';
+import { router as commentsRouter } from './api/comments/comments.js';
 import { router as searchRouter } from './api/search/search.js';
 import Sequelize from 'sequelize';
 import helmet from 'helmet';
