@@ -153,6 +153,7 @@ app.use(
 );
 app.use('/api/search', searchRouter);
 app.use('/api/posts', postsRouter);
+app.use('/api/comments', commentsRouter);
 app.post('/api/logout', function (req, res, next) {
     req.logout(function (err) {
         if (err) {
