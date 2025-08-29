@@ -12,7 +12,7 @@ const router = Router();
  *     tags:
  *       - Comments
  *     summary: Get all comments for a post (including nested)
- *     description: Returns a paginated array of all comments for the specified post, including nested comments. Each comment includes all fields from the post_comments record.
+ *     description: Returns a paginated array of all comments for the specified post, including nested comments. Each comment includes all fields from the post_comments record, plus the username and userProfilePic (or photoUrl from auth_providers if userProfilePic is null).
  *     parameters:
  *       - in: path
  *         name: postId
@@ -52,6 +52,11 @@ const router = Router();
  *                         type: integer
  *                       userId:
  *                         type: integer
+ *                       username:
+ *                         type: string
+ *                       userProfilePic:
+ *                         type: string
+ *                         nullable: true
  *                       content:
  *                         type: string
  *                       parentCommentId:
@@ -85,7 +90,6 @@ const router = Router();
 
 router.get('/:postId', async (req, res) => {
     try {
-        // Pagination
         const postId = Number(req.params.postId);
         const page = parseInt(req.query.page, 10) || 1;
         const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 20, 50);
@@ -108,8 +112,32 @@ router.get('/:postId', async (req, res) => {
                 offset,
             });
 
+        // Enrich comments with username and profile pic
+        const enrichedComments = await Promise.all(
+            comments.map(async (comment) => {
+                const user = await db.users.findByPk(comment.userId, {
+                    attributes: ['username', 'userProfilePic'],
+                });
+
+                let profilePic = user?.userProfilePic || null;
+                if (!profilePic) {
+                    const provider = await db.auth_providers.findOne({
+                        where: { userId: comment.userId },
+                        attributes: ['photoUrl'],
+                    });
+                    profilePic = provider?.photoUrl || null;
+                }
+
+                return {
+                    ...comment.toJSON(),
+                    username: user?.username || null,
+                    userProfilePic: profilePic,
+                };
+            })
+        );
+
         res.status(200).json({
-            comments,
+            comments: enrichedComments,
             totalCount: count,
             pagination: {
                 page,
