@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import db from '../../models/index.js';
-import jwt from 'jsonwebtoken'; 
+import jwt from 'jsonwebtoken';
 import { uploadPostImage } from '../../lib/upload.js';
 import authenticate from '../../lib/authenticate.js';
 import { getUserProfilePic } from '../../lib/user-utils.js';
@@ -292,6 +292,9 @@ router.get('/papers', async (req, res) => {
  *                   items:
  *                     type: object
  *                     properties:
+ *                       postId:
+ *                         type: integer
+ *                         description: The ID of the post
  *                       id:
  *                         type: integer
  *                       userId:
@@ -386,6 +389,12 @@ router.get('/userposts', async (req, res) => {
                 'type',
                 'image',
                 'userId',
+                'likesCount',
+                'dislikesCount',
+                'laughsCount',
+                'angersCount',
+                'commentsCount',
+                'sharesCount',
             ],
             where: { type: 'user' },
             order: [['createdAt', 'DESC']],
@@ -393,29 +402,7 @@ router.get('/userposts', async (req, res) => {
             offset,
         });
 
-        // More efficient query for stats - use a single query with aggregation if possible
         const postIds = userPosts.map((post) => post.id);
-
-        // Get all reactions counts in a single query
-        const reactionCounts = await db.post_reactions.findAll({
-            attributes: [
-                'postId',
-                'reaction',
-                [db.sequelize.fn('count', db.sequelize.col('id')), 'count'],
-            ],
-            where: { postId: postIds },
-            group: ['postId', 'reaction'],
-        });
-
-        // Get comments counts in a single query
-        const commentCounts = await db.post_comments.findAll({
-            attributes: [
-                'postId',
-                [db.sequelize.fn('count', db.sequelize.col('id')), 'count'],
-            ],
-            where: { postId: postIds },
-            group: ['postId'],
-        });
 
         // Get bookmarks only if userId is present
         let bookmarkedPostIds = [];
@@ -427,16 +414,6 @@ router.get('/userposts', async (req, res) => {
             bookmarkedPostIds = bookmarks.map((b) => b.postId);
         }
 
-        // Get share counts in a single query
-        const shareCounts = await db.post_shares.findAll({
-            attributes: [
-                'postId',
-                [db.sequelize.fn('count', db.sequelize.col('id')), 'count'],
-            ],
-            where: { postId: postIds },
-            group: ['postId'],
-        });
-
         // Map the counts to each post
         const postsWithStats = await Promise.all(
             userPosts.map(async (post) => {
@@ -447,37 +424,14 @@ router.get('/userposts', async (req, res) => {
                 // Get user (author's) profile pic from posts userId
                 const profilePic = await getUserProfilePic(userId);
 
-                // Get reaction counts for this post
-                const likes =
-                    reactionCounts.find(
-                        (r) => r.postId === postId && r.reaction === 'like'
-                    )?.count || 0;
-                const dislikes =
-                    reactionCounts.find(
-                        (r) => r.postId === postId && r.reaction === 'dislike'
-                    )?.count || 0;
-                const laughs =
-                    reactionCounts.find(
-                        (r) => r.postId === postId && r.reaction === 'laugh'
-                    )?.count || 0;
-                const angers =
-                    reactionCounts.find(
-                        (r) => r.postId === postId && r.reaction === 'anger'
-                    )?.count || 0;
-
-                // Get comment count for this post
-                const comments =
-                    commentCounts.find((c) => c.postId === postId)?.count || 0;
-
-                // Get share count for this post
-                const shares =
-                    shareCounts.find((s) => s.postId === postId)?.count || 0;
-
+                // Use counts directly from the post record
+                const likes = post.likesCount || 0;
+                const dislikes = post.dislikesCount || 0;
+                const laughs = post.laughsCount || 0;
+                const angers = post.angersCount || 0;
+                const comments = post.commentsCount || 0;
+                const shares = post.sharesCount || 0;
                 const totalReactions = likes + dislikes + laughs + angers;
-                console.log(
-                    `\n\nPost ${postId} totalReactions:`,
-                    totalReactions
-                );
 
                 // Only return isBookmarked if userId is present
                 const isBookmarked = userId
@@ -485,11 +439,13 @@ router.get('/userposts', async (req, res) => {
                     : false;
 
                 return {
+                    postId,
                     ...postData,
                     userId,
                     imgSrc: image ? image : null,
                     authorProfilePic: profilePic,
                     totalReactions,
+                    isBookmarked,
                     likes,
                     dislikes,
                     laughs,
@@ -500,7 +456,7 @@ router.get('/userposts', async (req, res) => {
                 };
             })
         );
-        //console.log('userPosts response:', postsWithStats); // Debug output
+        console.log('userPosts response:', postsWithStats); // Debug output
 
         res.status(200).json({
             userPosts: postsWithStats,
