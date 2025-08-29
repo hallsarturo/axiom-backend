@@ -151,4 +151,6 @@ router.get('/:postId', async (req, res) => {
     }
 });
 
+router.put()
+
 export { router };

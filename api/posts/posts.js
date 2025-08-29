@@ -134,6 +134,7 @@ router.get('/papers', async (req, res) => {
         const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 20, 50);
         const offset = (page - 1) * pageSize;
 
+        // Get posts with stats directly from posts table
         const { count, rows: paperPosts } = await db.posts.findAndCountAll({
             attributes: [
                 'id',
@@ -145,6 +146,12 @@ router.get('/papers', async (req, res) => {
                 'type',
                 'image',
                 'userId',
+                'likesCount',
+                'dislikesCount',
+                'laughsCount',
+                'angersCount',
+                'commentsCount',
+                'sharesCount',
             ],
             where: { type: 'paper' },
             order: [['createdAt', 'DESC']],
@@ -153,34 +160,6 @@ router.get('/papers', async (req, res) => {
         });
 
         const postIds = paperPosts.map((post) => post.id);
-
-        const reactionCounts = await db.post_reactions.findAll({
-            attributes: [
-                'postId',
-                'reaction',
-                [db.sequelize.fn('count', db.sequelize.col('id')), 'count'],
-            ],
-            where: { postId: postIds },
-            group: ['postId', 'reaction'],
-        });
-
-        const commentCounts = await db.post_comments.findAll({
-            attributes: [
-                'postId',
-                [db.sequelize.fn('count', db.sequelize.col('id')), 'count'],
-            ],
-            where: { postId: postIds },
-            group: ['postId'],
-        });
-
-        const shareCounts = await db.post_shares.findAll({
-            attributes: [
-                'postId',
-                [db.sequelize.fn('count', db.sequelize.col('id')), 'count'],
-            ],
-            where: { postId: postIds },
-            group: ['postId'],
-        });
 
         // Get bookmarks only if userId is present
         let bookmarkedPostIds = [];
@@ -199,28 +178,13 @@ router.get('/papers', async (req, res) => {
                 ? post.identifier.replace(/^oai:/, '')
                 : post.identifier;
 
-            const likes =
-                reactionCounts.find(
-                    (r) => r.postId === postId && r.reaction === 'like'
-                )?.count || 0;
-            const dislikes =
-                reactionCounts.find(
-                    (r) => r.postId === postId && r.reaction === 'dislike'
-                )?.count || 0;
-            const laughs =
-                reactionCounts.find(
-                    (r) => r.postId === postId && r.reaction === 'laugh'
-                )?.count || 0;
-            const angers =
-                reactionCounts.find(
-                    (r) => r.postId === postId && r.reaction === 'anger'
-                )?.count || 0;
-
-            const comments =
-                commentCounts.find((c) => c.postId === postId)?.count || 0;
-            const shares =
-                shareCounts.find((s) => s.postId === postId)?.count || 0;
-
+            // Use counts directly from the post record
+            const likes = post.likesCount || 0;
+            const dislikes = post.dislikesCount || 0;
+            const laughs = post.laughsCount || 0;
+            const angers = post.angersCount || 0;
+            const comments = post.commentsCount || 0;
+            const shares = post.sharesCount || 0;
             const totalReactions = likes + dislikes + laughs + angers;
 
             // Only return isBookmarked if userId is present
