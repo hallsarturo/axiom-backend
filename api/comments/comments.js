@@ -151,6 +151,193 @@ router.get('/:postId', async (req, res) => {
     }
 });
 
-router.put()
+/**
+ * @swagger
+ * /api/comments/{postId}:
+ *   post:
+ *     tags:
+ *       - Comments
+ *     summary: Add a comment to a post
+ *     description: Creates a new comment for the specified post. Supports nested comments via parentCommentId. Increments the commentsCount in the related post.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the post to comment on
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               content:
+ *                 type: string
+ *                 description: The comment text
+ *               parentCommentId:
+ *                 type: integer
+ *                 nullable: true
+ *                 description: The ID of the parent comment (for nested comments)
+ *     responses:
+ *       201:
+ *         description: Comment added successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Comment added
+ *                 comment:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     postId:
+ *                       type: integer
+ *                     userId:
+ *                       type: integer
+ *                     content:
+ *                       type: string
+ *                     parentCommentId:
+ *                       type: integer
+ *                       nullable: true
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       500:
+ *         description: Could not process comment
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+
+router.post('/:postId', authenticate, async (req, res) => {
+    try {
+        let userId = req.userId;
+        const postId = Number(req.params.postId);
+        const { content, parentCommentId } = req.body;
+
+        const newComment = await db.post_comments.create({
+            postId,
+            userId,
+            content,
+            parentCommentId: parentCommentId || null,
+        });
+
+        await db.posts.increment(
+            { commentsCount: +1 },
+            { where: { id: postId } }
+        );
+        return res
+            .status(201)
+            .json({ message: 'Comment added', comment: newComment });
+    } catch (err) {
+        console.error('/:postId/:parentCommentId error: ', err);
+        res.status(500).json({ error: 'Could not process comment' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/comments/{commentId}:
+ *   delete:
+ *     tags:
+ *       - Comments
+ *     summary: Delete a comment by its ID
+ *     description: Deletes a comment by its ID if the authenticated user is the owner. Also decrements the commentsCount in the related post.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the comment to delete
+ *     responses:
+ *       200:
+ *         description: Comment removed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Comment removed
+ *       404:
+ *         description: Comment does not exist or user does not have permission
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Comment does not exist or you do not have permission to delete it.
+ *       500:
+ *         description: Could not process comment
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+
+router.delete('/:commentId', authenticate, async (req, res) => {
+    try {
+        const commentId = Number(req.params.commentId);
+        const userId = req.userId;
+
+        // Find the comment by its ID
+        const existingComment = await db.post_comments.findOne({
+            where: { id: commentId, userId },
+        });
+
+        if (!existingComment) {
+            return res.status(404).json({
+                message:
+                    'Comment does not exist or you do not have permission to delete it.',
+            });
+        }
+
+        const postId = existingComment.postId;
+
+        // Delete the comment
+        await existingComment.destroy();
+
+        // Decrement the commentsCount in the related post
+        await db.posts.increment(
+            { commentsCount: -1 },
+            { where: { id: postId } }
+        );
+
+        return res.status(200).json({ message: 'Comment removed' });
+    } catch (err) {
+        console.error('/comments/:commentId error: ', err);
+        res.status(500).json({ error: 'Could not process comment' });
+    }
+});
 
 export { router };

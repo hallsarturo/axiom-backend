@@ -548,8 +548,8 @@ router.put('/reaction', async (req, res) => {
             return res.status(201).json({ message: 'Reaction added' });
         }
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Could not update reaction' });
+        console.error('/reaction error: ', err);
+        res.status(500).json({ error: 'Could not process reaction' });
     }
 });
 
