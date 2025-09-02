@@ -22,7 +22,7 @@ const signupLimiter = rateLimit({
 // PASSPORT-JWT
 let opts = {};
 opts.jwtFromRequest = (req) => req?.cookies?.token || null; // Extract token from cookie
-opts.secretOrKey = 'secret';
+opts.secretOrKey = process.env.JWT_SECRET;
 // opts.issuer = 'accoaccounts.examplesoft.com';
 // opts.audience = 'yoursite.net';
 
@@ -92,7 +92,7 @@ router.post('/', async (req, res) => {
                         mobilePhone: existingUser.mobilePhone,
                         verified: false,
                     },
-                    'secret',
+                   process.env.JWT_SECRET,
                     { expiresIn: '15m' }
                 );
                 res.cookie('token', provisionalToken, {
@@ -129,7 +129,7 @@ router.post('/', async (req, res) => {
                 password: newUser.password,
                 verified: false,
             },
-            'secret',
+            process.env.JWT_SECRET,
             { expiresIn: '15m' }
         );
         // console.log('created token: ', provisionalToken);
@@ -190,7 +190,7 @@ router.post('/verify', async (req, res) => {
         // Verify and decode token
         let userData;
         try {
-            userData = jwt.verify(provisionalToken, 'secret');
+            userData = jwt.verify(provisionalToken, process.env.JWT_SECRET);
         } catch (err) {
             return res
                 .status(401)
@@ -232,7 +232,7 @@ router.post('/verify', async (req, res) => {
                         username: user.username,
                         verified: true,
                     },
-                    'secret',
+                    process.env.JWT_SECRET,
                     { expiresIn: '10h' }
                 );
                 return res

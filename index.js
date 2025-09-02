@@ -93,7 +93,7 @@ app.use(
 //Express-session
 app.use(
     session({
-        secret: 'secret',
+        secret: process.env.SESSION_SECRET,
         resave: false,
         saveUninitialized: true,
         cookie: {
@@ -128,7 +128,7 @@ passport.deserializeUser(async (id, done) => {
 // PASSPORT-JWT
 let opts = {};
 opts.jwtFromRequest = (req) => req?.cookies?.token || null; // Extract token from cookie
-opts.secretOrKey = 'secret';
+opts.secretOrKey = process.env.JWT_SECRET;
 // opts.issuer = 'accoaccounts.examplesoft.com';
 // opts.audience = 'yoursite.net';
 

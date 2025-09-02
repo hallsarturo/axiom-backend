@@ -14,7 +14,7 @@ const router = Router();
 // JWT
 let opts = {};
 opts.jwtFromRequest = (req) => req?.cookies?.token || null; // Extract token from cookie
-opts.secretOrKey = 'secret';
+opts.secretOrKey = process.env.JWT_SECRET;
 // opts.issuer = 'accoaccounts.examplesoft.com';
 // opts.audience = 'yoursite.net';
 
@@ -31,7 +31,7 @@ passport.use(
                     return token;
                 },
             ]),
-            secretOrKey: 'secret',
+            secretOrKey: process.env.JWT_SECRET,
         },
         async (jwtPayload, done) => {
             // Your verification logic
@@ -92,7 +92,6 @@ passport.use(
 
         async (accessToken, refreshToken, profile, done) => {
             try {
-
                 // Use the correct way to get email from Google profile
                 const email =
                     profile.emails && profile.emails.length > 0
@@ -172,7 +171,7 @@ router.get(
                 username: req.user.username,
                 isVerified: true,
             },
-            'secret',
+            process.env.JWT_SECRET,
             { expiresIn: '10h' }
         );
 

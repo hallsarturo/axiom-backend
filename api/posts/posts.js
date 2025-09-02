@@ -122,7 +122,7 @@ router.get('/papers', async (req, res) => {
         // If token exists, extract userId, else leave undefined
         if (token) {
             try {
-                const payload = jwt.verify(token, 'secret');
+                const payload = jwt.verify(token, process.env.JWT_SECRET);
                 userId = payload.id;
             } catch (err) {
                 userId = undefined; // Invalid token, treat as not logged in
@@ -330,7 +330,7 @@ router.get('/userposts', async (req, res) => {
         // If token exists, extract userId, else leave undefined
         if (token) {
             try {
-                const payload = jwt.verify(token, 'secret');
+                const payload = jwt.verify(token, process.env.JWT_SECRET);
                 userId = payload.id;
             } catch (err) {
                 userId = undefined; // Invalid token, treat as not logged in

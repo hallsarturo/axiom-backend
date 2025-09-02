@@ -87,7 +87,7 @@ router.post('/', async (req, res) => {
                     id: user.id,
                     username: user.username,
                 },
-                'secret',
+               process.env.JWT_SECRET,
                 { expiresIn: '1h' }
             );
             if (process.env.NODE_ENV === 'production') {
