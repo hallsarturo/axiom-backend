@@ -1133,7 +1133,7 @@ router.put('/bookmark/:postId', authenticate, async (req, res) => {
 
 router.get('/bookmarks/:postId', async (req, res) => {
     try {
-        const { postId } = req.params;
+        const postId = Number(req.params.postId);
 
         // Check if post exists
         const post = await db.posts.findByPk(postId);
