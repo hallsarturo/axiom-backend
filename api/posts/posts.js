@@ -1084,6 +1084,76 @@ router.put('/bookmark/:postId', authenticate, async (req, res) => {
 
 /**
  * @swagger
+ * /api/posts/bookmarks/{postId}:
+ *   get:
+ *     tags:
+ *       - Posts
+ *     summary: Get total bookmarks count for a post
+ *     description: Returns the total number of bookmarks for the specified post.
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the post to get bookmark count for
+ *     responses:
+ *       200:
+ *         description: Total bookmarks count for the post
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 postId:
+ *                   type: integer
+ *                 totalBookmarks:
+ *                   type: integer
+ *       404:
+ *         description: Post not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Post not found
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Server error
+ */
+
+router.get('/bookmarks/:postId', async (req, res) => {
+    try {
+        const { postId } = req.params;
+
+        // Check if post exists
+        const post = await db.posts.findByPk(postId);
+        if (!post) {
+            return res.status(404).json({ error: 'Post not found' });
+        }
+        // Count total bookmarks for this post
+        const totalBookmarks = await db.post_bookmarks.count({
+            where: { postId },
+        });
+
+        res.status(200).json({ postId: Number(postId), totalBookmarks });
+    } catch (err) {
+        console.error('get /bookmarks/:postId error: ', err);
+        res.status(500), json({ error: 'Server error' });
+    }
+});
+
+/**
+ * @swagger
  * /api/posts/bookmarks/{userId}:
  *   get:
  *     tags:
