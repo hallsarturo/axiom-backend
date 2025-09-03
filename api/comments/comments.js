@@ -107,7 +107,7 @@ router.get('/:postId', async (req, res) => {
                     'createdAt',
                 ],
                 where: { postId },
-                order: [['createdAt', 'ASC']],
+                order: [['createdAt', 'DESC']],
                 limit: pageSize,
                 offset,
             });
