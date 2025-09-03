@@ -23,7 +23,9 @@ export default (sequelize, DataTypes) => {
     );
 
     CommentReaction.associate = (db) => {
-        CommentReaction.belongsTo(db.post_comments, { foreignKey: 'commentId' });
+        CommentReaction.belongsTo(db.post_comments, {
+            foreignKey: 'commentId',
+        });
         CommentReaction.belongsTo(db.users, { foreignKey: 'userId' });
     };
 

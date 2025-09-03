@@ -420,7 +420,7 @@ router.get('/userposts', async (req, res) => {
                 };
             })
         );
-        console.log('userPosts response:', postsWithStats); // Debug output
+        // console.log('userPosts response:', postsWithStats); // Debug output
 
         res.status(200).json({
             userPosts: postsWithStats,

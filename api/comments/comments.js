@@ -340,4 +340,133 @@ router.delete('/:commentId', authenticate, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/comments/reaction:
+ *   put:
+ *     tags:
+ *       - Comments
+ *     summary: Add/update/remove a reaction for a comment
+ *     description: Adds a new reaction, updates an existing reaction, or removes it if the same reaction is sent again. Updates counters on the comment record.
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               commentId:
+ *                 type: integer
+ *               reaction:
+ *                 type: string
+ *                 enum: [like, dislike, laugh, anger]
+ *     responses:
+ *       200:
+ *         description: Reaction removed or updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       201:
+ *         description: Reaction added
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Could not process reaction
+ */
+
+router.put('/reaction', authenticate, async (req, res) => {
+    try {
+        let { commentId, reaction } = req.body;
+        commentId = Number(commentId);
+        const userId = req.userId;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'User not authenticated' });
+        }
+
+        if (!commentId) {
+            return res.status(400).json({ error: 'No commentId provided' });
+        }
+
+        if (!['like', 'dislike', 'laugh', 'anger'].includes(reaction)) {
+            return res.status(400).json({ error: 'Invalid reaction type' });
+        }
+
+        // Ensure comment exists
+        const comment = await db.post_comments.findByPk(commentId);
+        if (!comment) {
+            return res.status(404).json({ error: 'Comment not found' });
+        }
+
+        const existingReaction = await db.comment_reactions.findOne({
+            where: { commentId, userId },
+        });
+
+        if (existingReaction) {
+            if (existingReaction.reaction === reaction) {
+                // Remove reaction
+                await existingReaction.destroy();
+                await db.post_comments.increment(
+                    { [`${reaction}sCount`]: -1 },
+                    { where: { id: commentId } }
+                );
+            } else {
+                // Change reaction type
+                await db.post_comments.increment(
+                    { [`${existingReaction.reaction}sCount`]: -1 },
+                    { where: { id: commentId } }
+                );
+                existingReaction.reaction = reaction;
+                await existingReaction.save();
+                await db.post_comments.increment(
+                    { [`${reaction}sCount`]: 1 },
+                    { where: { id: commentId } }
+                );
+            }
+        } else {
+            // Add new reaction
+            await db.comment_reactions.create({ commentId, userId, reaction });
+            await db.post_comments.increment(
+                { [`${reaction}sCount`]: 1 },
+                { where: { id: commentId } }
+            );
+        }
+
+        // Update totalReactions by summing all reaction counts in post_comments
+        const updatedComment = await db.post_comments.findByPk(commentId);
+        const totalReactions =
+            (updatedComment.likesCount || 0) +
+            (updatedComment.dislikesCount || 0) +
+            (updatedComment.laughsCount || 0) +
+            (updatedComment.angersCount || 0);
+
+        await db.post_comments.update(
+            { totalReactions },
+            { where: { id: commentId } }
+        );
+
+        return res.status(200).json({ message: 'Reaction processed' });
+    } catch (err) {
+        console.error('could not put /comments/reaction/:commentId: ', err);
+        res.status(500).json({
+            error: 'could not put /comments/reaction/:commentId',
+        });
+    }
+});
+
 export { router };
