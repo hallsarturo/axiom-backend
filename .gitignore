@@ -4,4 +4,5 @@ node_modules
 npm-debug.log
 data/
 /public/uploads/*
-log/
+log/*
+log/access.log
