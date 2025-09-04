@@ -560,7 +560,7 @@ router.put('/reaction', async (req, res) => {
  *     tags:
  *       - Posts
  *     summary: Get a single post by ID with reaction stats
- *     description: Returns a single post with its reaction counts and the current user's reaction.
+ *     description: Returns a single post with its reaction counts, totalReactions, and the current user's reaction.
  *     parameters:
  *       - in: path
  *         name: postId
@@ -595,13 +595,29 @@ router.put('/reaction', async (req, res) => {
  *                   type: integer
  *                 angers:
  *                   type: integer
+ *                 totalReactions:
+ *                   type: integer
  *                 currentUserReaction:
  *                   type: string
  *                   nullable: true
  *       404:
  *         description: Post not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  *       500:
  *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
 
 router.get('/:postId', async (req, res) => {
