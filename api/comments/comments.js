@@ -151,6 +151,7 @@ router.get('/:postId', async (req, res) => {
     }
 });
 
+
 /**
  * @swagger
  * /api/comments/{postId}:
@@ -468,5 +469,7 @@ router.put('/reaction', authenticate, async (req, res) => {
         });
     }
 });
+
+
 
 export { router };
