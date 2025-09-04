@@ -7,19 +7,19 @@ const router = Router();
 
 /**
  * @swagger
- * /api/comments/{postId}:
+ * /api/comments/{postId}/parents:
  *   get:
  *     tags:
  *       - Comments
- *     summary: Get all comments for a post (including nested)
- *     description: Returns a paginated array of all comments for the specified post, including nested comments. Each comment includes all fields from the post_comments record, plus the username and userProfilePic (or photoUrl from auth_providers if userProfilePic is null).
+ *     summary: Get parent comments for a post (paginated)
+ *     description: Returns a paginated array of parent comments for the specified post. Each comment includes user info, children count, and a flag indicating if it has children.
  *     parameters:
  *       - in: path
  *         name: postId
  *         required: true
  *         schema:
  *           type: integer
- *         description: The ID of the post to fetch comments for
+ *         description: The ID of the post to fetch parent comments for
  *       - in: query
  *         name: page
  *         schema:
@@ -35,7 +35,7 @@ const router = Router();
  *         description: Number of comments per page (max 50)
  *     responses:
  *       200:
- *         description: List of comments for the post
+ *         description: List of parent comments for the post
  *         content:
  *           application/json:
  *             schema:
@@ -59,15 +59,16 @@ const router = Router();
  *                         nullable: true
  *                       content:
  *                         type: string
- *                       parentCommentId:
- *                         type: integer
- *                         nullable: true
  *                       createdAt:
  *                         type: string
  *                         format: date-time
+ *                       childrenCount:
+ *                         type: integer
+ *                       hasChildren:
+ *                         type: boolean
  *                 totalCount:
  *                   type: integer
- *                   description: Total number of comments for the post
+ *                   description: Total number of parent comments for the post
  *                 pagination:
  *                   type: object
  *                   properties:
@@ -88,29 +89,23 @@ const router = Router();
  *                   type: string
  */
 
-router.get('/:postId', async (req, res) => {
+router.get('/:postId/parents', async (req, res) => {
     try {
         const postId = Number(req.params.postId);
         const page = parseInt(req.query.page, 10) || 1;
         const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 20, 50);
         const offset = (page - 1) * pageSize;
 
-        // Get all comments for the post (including nested)
-        const { count, rows: comments } =
-            await db.post_comments.findAndCountAll({
-                attributes: [
-                    'id',
-                    'postId',
-                    'userId',
-                    'content',
-                    'parentCommentId',
-                    'createdAt',
-                ],
-                where: { postId },
+        // Fetch parent comments only
+        const { count, rows: parents } = await db.post_comments.findAndCountAll(
+            {
+                attributes: ['id', 'postId', 'userId', 'content', 'createdAt'],
+                where: { postId, parentCommentId: null },
                 order: [['createdAt', 'DESC']],
                 limit: pageSize,
                 offset,
-            });
+            }
+        );
 
         // Enrich comments with username and profile pic
         const enrichedComments = await Promise.all(
@@ -128,8 +123,14 @@ router.get('/:postId', async (req, res) => {
                     profilePic = provider?.photoUrl || null;
                 }
 
+                const childrenCount = await db.post_comments.count({
+                    where: { parentCommentId: comment.id },
+                });
+
                 return {
                     ...comment.toJSON(),
+                    childrenCount,
+                    hasChildren: childrenCount > 0,
                     username: user?.username || null,
                     userProfilePic: profilePic,
                 };
@@ -151,6 +152,120 @@ router.get('/:postId', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/comments/{postId}/children/{parentCommentId}:
+ *   get:
+ *     tags:
+ *       - Comments
+ *     summary: Get child comments for a parent comment (paginated)
+ *     description: Returns a paginated array of child comments for the specified parent comment.
+ *     parameters:
+ *       - in: path
+ *         name: postId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the post
+ *       - in: path
+ *         name: parentCommentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the parent comment
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (for pagination)
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *           maximum: 50
+ *         description: Number of comments per page (max 50)
+ *     responses:
+ *       200:
+ *         description: List of child comments for the parent comment
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 comments:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       postId:
+ *                         type: integer
+ *                       userId:
+ *                         type: integer
+ *                       content:
+ *                         type: string
+ *                       parentCommentId:
+ *                         type: integer
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                 totalCount:
+ *                   type: integer
+ *                   description: Total number of child comments for the parent
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     pageSize:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       500:
+ *         description: Could not fetch child comments
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+
+router.get('/:postId/children/:parentCommentId', async (req, res) => {
+    try {
+        const postId = Number(req.params.postId);
+        const parentCommentId = Number(req.params.parentCommentId);
+        const page = parseInt(req.query.page, 10) || 1;
+        const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 20, 50);
+        const offset = (page - 1) * pageSize;
+
+        // Fetch child comments for the parent
+        const { count, rows: children } =
+            await db.post_comments.findAndCountAll({
+                where: { postId, parentId },
+                order: [['createdAt', 'DESC']],
+                limit: pageSize,
+                offset,
+            });
+
+        res.status(200).json({
+            comments: children,
+            totalCount: count,
+            pagination: {
+                page,
+                pageSize,
+                totalPages: Math.ceil(count / pageSize),
+            },
+        });
+    } catch (err) {
+        console.error('/:postId/children/:parentCommentId error: ', err);
+        res.status(500).json({ error: 'Could not fetch child comments' });
+    }
+});
 
 /**
  * @swagger
@@ -469,7 +584,5 @@ router.put('/reaction', authenticate, async (req, res) => {
         });
     }
 });
-
-
 
 export { router };
