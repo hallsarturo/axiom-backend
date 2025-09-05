@@ -96,16 +96,19 @@ router.get('/:postId/parents', async (req, res) => {
         const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 20, 50);
         const offset = (page - 1) * pageSize;
 
-        // Fetch parent comments only
-        const { count, rows: parents } = await db.post_comments.findAndCountAll(
-            {
-                attributes: ['id', 'postId', 'userId', 'content', 'createdAt'],
-                where: { postId, parentCommentId: null },
-                order: [['createdAt', 'DESC']],
-                limit: pageSize,
-                offset,
-            }
-        );
+        // Count all comments for the post (parents + children)
+        const totalCount = await db.post_comments.count({
+            where: { postId },
+        });
+
+        // Fetch only parent comments for pagination
+        const { rows: parents } = await db.post_comments.findAndCountAll({
+            where: { postId, parentCommentId: null },
+            order: [['createdAt', 'DESC']],
+            limit: pageSize,
+            offset,
+            attributes: ['id', 'postId', 'userId', 'content', 'createdAt'],
+        });
 
         // Enrich comments with username and profile pic
         const enrichedComments = await Promise.all(
@@ -139,11 +142,11 @@ router.get('/:postId/parents', async (req, res) => {
 
         res.status(200).json({
             comments: enrichedComments,
-            totalCount: count,
+            totalCount,
             pagination: {
                 page,
                 pageSize,
-                totalPages: Math.ceil(count / pageSize),
+                totalPages: Math.ceil(totalCount / pageSize),
             },
         });
     } catch (err) {
