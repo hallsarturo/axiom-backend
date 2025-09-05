@@ -109,7 +109,7 @@ router.get('/:postId/parents', async (req, res) => {
 
         // Enrich comments with username and profile pic
         const enrichedComments = await Promise.all(
-            comments.map(async (comment) => {
+            parents.map(async (comment) => {
                 const user = await db.users.findByPk(comment.userId, {
                     attributes: ['username', 'userProfilePic'],
                 });
@@ -246,7 +246,7 @@ router.get('/:postId/children/:parentCommentId', async (req, res) => {
         // Fetch child comments for the parent
         const { count, rows: children } =
             await db.post_comments.findAndCountAll({
-                where: { postId, parentId },
+                where: { postId, parentCommentId },
                 order: [['createdAt', 'DESC']],
                 limit: pageSize,
                 offset,
