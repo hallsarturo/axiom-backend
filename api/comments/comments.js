@@ -159,7 +159,7 @@ router.get('/:postId/parents', async (req, res) => {
  *     tags:
  *       - Comments
  *     summary: Get child comments for a parent comment (paginated)
- *     description: Returns a paginated array of child comments for the specified parent comment.
+ *     description: Returns a paginated array of child comments for the specified parent comment. Each comment includes user info.
  *     parameters:
  *       - in: path
  *         name: postId
@@ -205,6 +205,11 @@ router.get('/:postId/parents', async (req, res) => {
  *                         type: integer
  *                       userId:
  *                         type: integer
+ *                       username:
+ *                         type: string
+ *                       userProfilePic:
+ *                         type: string
+ *                         nullable: true
  *                       content:
  *                         type: string
  *                       parentCommentId:
@@ -252,8 +257,32 @@ router.get('/:postId/children/:parentCommentId', async (req, res) => {
                 offset,
             });
 
+        // Enrich child comments with username and profile pic
+        const enrichedChildren = await Promise.all(
+            children.map(async (comment) => {
+                const user = await db.users.findByPk(comment.userId, {
+                    attributes: ['username', 'userProfilePic'],
+                });
+
+                let profilePic = user?.userProfilePic || null;
+                if (!profilePic) {
+                    const provider = await db.auth_providers.findOne({
+                        where: { userId: comment.userId },
+                        attributes: ['photoUrl'],
+                    });
+                    profilePic = provider?.photoUrl || null;
+                }
+
+                return {
+                    ...comment.toJSON(),
+                    username: user?.username || null,
+                    userProfilePic: profilePic,
+                };
+            })
+        );
+
         res.status(200).json({
-            comments: children,
+            comments: enrichedChildren,
             totalCount: count,
             pagination: {
                 page,
