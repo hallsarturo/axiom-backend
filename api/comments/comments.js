@@ -7,12 +7,137 @@ const router = Router();
 
 /**
  * @swagger
+ * /api/comments/detail/{commentId}:
+ *   get:
+ *     tags:
+ *       - Comments
+ *     summary: Get a comment by its ID
+ *     description: Returns a single comment by its ID, including user info and reaction counts.
+ *     parameters:
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the comment to retrieve
+ *     responses:
+ *       200:
+ *         description: Comment details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 postId:
+ *                   type: integer
+ *                 userId:
+ *                   type: integer
+ *                 username:
+ *                   type: string
+ *                 userProfilePic:
+ *                   type: string
+ *                   nullable: true
+ *                 content:
+ *                   type: string
+ *                 parentCommentId:
+ *                   type: integer
+ *                   nullable: true
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 likesCount:
+ *                   type: integer
+ *                 dislikesCount:
+ *                   type: integer
+ *                 laughsCount:
+ *                   type: integer
+ *                 angersCount:
+ *                   type: integer
+ *                 totalReactions:
+ *                   type: integer
+ *       404:
+ *         description: Comment not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       500:
+ *         description: Could not fetch comment
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+
+router.get('/detail/:commentId', async (req, res) => {
+    try {
+        const commentId = Number(req.params.commentId);
+        const comment = await db.post_comments.findByPk(commentId);
+
+        if (!comment) {
+            return res.status(404).json({ error: 'Comment not found' });
+        }
+
+        const user = await db.users.findByPk(comment.userId, {
+            attributes: ['username', 'userProfilePic'],
+        });
+
+        let profilePic = user?.userProfilePic || null;
+        if (!profilePic) {
+            const provider = await db.auth_providers.findOne({
+                where: { userId: comment.userId },
+                attributes: ['photoUrl'],
+            });
+            profilePic = provider?.photoUrl || null;
+        }
+
+        const likesCount = await db.comment_reactions.count({
+            where: { commentId: comment.id, reaction: 'like' },
+        });
+        const dislikesCount = await db.comment_reactions.count({
+            where: { commentId: comment.id, reaction: 'dislike' },
+        });
+        const laughsCount = await db.comment_reactions.count({
+            where: { commentId: comment.id, reaction: 'laugh' },
+        });
+        const angersCount = await db.comment_reactions.count({
+            where: { commentId: comment.id, reaction: 'anger' },
+        });
+        const totalReactions =
+            likesCount + dislikesCount + laughsCount + angersCount;
+
+        res.status(200).json({
+            ...comment.toJSON(),
+            username: user?.username || null,
+            userProfilePic: profilePic,
+            likesCount,
+            dislikesCount,
+            laughsCount,
+            angersCount,
+            totalReactions,
+        });
+    } catch (err) {
+        console.error('/detail/:commentId error: ', err);
+        res.status(500).json({ error: 'Could not fetch comment' });
+    }
+});
+
+/**
+ * @swagger
  * /api/comments/{postId}/parents:
  *   get:
  *     tags:
  *       - Comments
  *     summary: Get parent comments for a post (paginated)
- *     description: Returns a paginated array of parent comments for the specified post. Each comment includes user info, children count, and a flag indicating if it has children.
+ *     description: Returns a paginated array of parent comments for the specified post. Each comment includes user info, children count, reaction counts, and a flag indicating if it has children.
  *     parameters:
  *       - in: path
  *         name: postId
@@ -66,9 +191,19 @@ const router = Router();
  *                         type: integer
  *                       hasChildren:
  *                         type: boolean
+ *                       likesCount:
+ *                         type: integer
+ *                       dislikesCount:
+ *                         type: integer
+ *                       laughsCount:
+ *                         type: integer
+ *                       angersCount:
+ *                         type: integer
+ *                       totalReactions:
+ *                         type: integer
  *                 totalCount:
  *                   type: integer
- *                   description: Total number of parent comments for the post
+ *                   description: Total number of comments (parents + children) for the post
  *                 pagination:
  *                   type: object
  *                   properties:
@@ -130,12 +265,33 @@ router.get('/:postId/parents', async (req, res) => {
                     where: { parentCommentId: comment.id },
                 });
 
+                // Get reaction counts from comment_reactions table
+                const likesCount = await db.comment_reactions.count({
+                    where: { commentId: comment.id, reaction: 'like' },
+                });
+                const dislikesCount = await db.comment_reactions.count({
+                    where: { commentId: comment.id, reaction: 'dislike' },
+                });
+                const laughsCount = await db.comment_reactions.count({
+                    where: { commentId: comment.id, reaction: 'laugh' },
+                });
+                const angersCount = await db.comment_reactions.count({
+                    where: { commentId: comment.id, reaction: 'anger' },
+                });
+                const totalReactions =
+                    likesCount + dislikesCount + laughsCount + angersCount;
+
                 return {
                     ...comment.toJSON(),
                     childrenCount,
                     hasChildren: childrenCount > 0,
                     username: user?.username || null,
                     userProfilePic: profilePic,
+                    likesCount,
+                    dislikesCount,
+                    laughsCount,
+                    angersCount,
+                    totalReactions,
                 };
             })
         );
