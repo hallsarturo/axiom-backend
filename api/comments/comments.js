@@ -137,7 +137,7 @@ router.get('/detail/:commentId', async (req, res) => {
  *     tags:
  *       - Comments
  *     summary: Get parent comments for a post (paginated)
- *     description: Returns a paginated array of parent comments for the specified post. Each comment includes user info, children count, reaction counts, and a flag indicating if it has children.
+ *     description: Returns a paginated array of parent comments for the specified post. Each comment includes user info, children count, reaction counts, a flag indicating if it has children, and the current user's reaction.
  *     parameters:
  *       - in: path
  *         name: postId
@@ -201,6 +201,9 @@ router.get('/detail/:commentId', async (req, res) => {
  *                         type: integer
  *                       totalReactions:
  *                         type: integer
+ *                       currentUserReaction:
+ *                         type: string
+ *                         nullable: true
  *                 totalCount:
  *                   type: integer
  *                   description: Total number of comments (parents + children) for the post
@@ -230,6 +233,7 @@ router.get('/:postId/parents', async (req, res) => {
         const page = parseInt(req.query.page, 10) || 1;
         const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 20, 50);
         const offset = (page - 1) * pageSize;
+        const userId = req.query.userId || null;
 
         // Count all comments for the post (parents + children)
         const totalCount = await db.post_comments.count({
@@ -281,6 +285,19 @@ router.get('/:postId/parents', async (req, res) => {
                 const totalReactions =
                     likesCount + dislikesCount + laughsCount + angersCount;
 
+                let currentUserReaction = null;
+                if (userId) {
+                    const reactionObj = await db.comment_reactions.findOne({
+                        where: {
+                            commentId: comment.id,
+                            userId: userId,
+                        },
+                    });
+                    currentUserReaction = reactionObj
+                        ? reactionObj.reaction
+                        : null;
+                }
+
                 return {
                     ...comment.toJSON(),
                     childrenCount,
@@ -292,6 +309,7 @@ router.get('/:postId/parents', async (req, res) => {
                     laughsCount,
                     angersCount,
                     totalReactions,
+                    currentUserReaction,
                 };
             })
         );
@@ -318,7 +336,7 @@ router.get('/:postId/parents', async (req, res) => {
  *     tags:
  *       - Comments
  *     summary: Get child comments for a parent comment (paginated)
- *     description: Returns a paginated array of child comments for the specified parent comment. Each comment includes user info.
+ *     description: Returns a paginated array of child comments for the specified parent comment. Each comment includes user info, reaction counts, and the current user's reaction.
  *     parameters:
  *       - in: path
  *         name: postId
@@ -345,6 +363,11 @@ router.get('/:postId/parents', async (req, res) => {
  *           default: 20
  *           maximum: 50
  *         description: Number of comments per page (max 50)
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: integer
+ *         description: The ID of the current user (for currentUserReaction)
  *     responses:
  *       200:
  *         description: List of child comments for the parent comment
@@ -376,6 +399,19 @@ router.get('/:postId/parents', async (req, res) => {
  *                       createdAt:
  *                         type: string
  *                         format: date-time
+ *                       likesCount:
+ *                         type: integer
+ *                       dislikesCount:
+ *                         type: integer
+ *                       laughsCount:
+ *                         type: integer
+ *                       angersCount:
+ *                         type: integer
+ *                       totalReactions:
+ *                         type: integer
+ *                       currentUserReaction:
+ *                         type: string
+ *                         nullable: true
  *                 totalCount:
  *                   type: integer
  *                   description: Total number of child comments for the parent
@@ -406,6 +442,7 @@ router.get('/:postId/children/:parentCommentId', async (req, res) => {
         const page = parseInt(req.query.page, 10) || 1;
         const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 20, 50);
         const offset = (page - 1) * pageSize;
+        const userId = req.query.userId || null;
 
         // Fetch child comments for the parent
         const { count, rows: children } =
@@ -432,10 +469,45 @@ router.get('/:postId/children/:parentCommentId', async (req, res) => {
                     profilePic = provider?.photoUrl || null;
                 }
 
+                // Get reaction counts from comment_reactions table
+                const likesCount = await db.comment_reactions.count({
+                    where: { commentId: comment.id, reaction: 'like' },
+                });
+                const dislikesCount = await db.comment_reactions.count({
+                    where: { commentId: comment.id, reaction: 'dislike' },
+                });
+                const laughsCount = await db.comment_reactions.count({
+                    where: { commentId: comment.id, reaction: 'laugh' },
+                });
+                const angersCount = await db.comment_reactions.count({
+                    where: { commentId: comment.id, reaction: 'anger' },
+                });
+                const totalReactions =
+                    likesCount + dislikesCount + laughsCount + angersCount;
+
+                let currentUserReaction = null;
+                if (userId) {
+                    const reactionObj = await db.comment_reactions.findOne({
+                        where: {
+                            commentId: comment.id,
+                            userId: userId,
+                        },
+                    });
+                    currentUserReaction = reactionObj
+                        ? reactionObj.reaction
+                        : null;
+                }
+
                 return {
                     ...comment.toJSON(),
                     username: user?.username || null,
                     userProfilePic: profilePic,
+                    likesCount,
+                    dislikesCount,
+                    laughsCount,
+                    angersCount,
+                    totalReactions,
+                    currentUserReaction,
                 };
             })
         );
