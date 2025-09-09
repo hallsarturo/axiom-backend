@@ -152,6 +152,12 @@ app.use('/api/user/followers', userFollowersRouter);
 app.use('/api/user', userProfileRouter);
 app.use(
     '/uploads',
+    (req, res, next) => {
+        res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL);
+        res.setHeader('Access-Control-Allow-Methods', 'GET');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        next();
+    },
     express.static(path.join(process.cwd(), 'public', 'uploads'))
 );
 app.use('/api/search', searchRouter);
