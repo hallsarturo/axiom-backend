@@ -6,6 +6,7 @@ import authenticate from '../../lib/authenticate.js';
 import { getUserProfilePic } from '../../lib/user-utils.js';
 import path from 'path';
 import fs from 'fs';
+import { wsService } from '../../index.js';
 
 const router = Router();
 
@@ -491,7 +492,6 @@ router.put('/reaction', async (req, res) => {
     try {
         let userId;
         const { postId, reaction } = req.body;
-        // console.log('\n\n/reaction request: ', req.body, '\n\n');
 
         if (process.env.NODE_ENV === 'development') {
             userId = req.body?.userId || req.user?.id;
@@ -511,21 +511,37 @@ router.put('/reaction', async (req, res) => {
             return res.status(400).json({ error: 'Invalid reaction type' });
         }
 
+        // Get post information to identify the author
+        const post = await db.posts.findByPk(postId);
+        if (!post) {
+            return res.status(404).json({ error: 'Post not found' });
+        }
+
+        // Don't notify if the author is reacting to their own post
+        const isOwnPost = post.userId === userId;
+
+        // Get reactor's username for the notification
+        const reactor = await db.users.findByPk(userId, {
+            attributes: ['username'],
+        });
+
         const existingReaction = await db.post_reactions.findOne({
             where: { postId, userId },
         });
 
+        let result;
+        let notificationType;
+
         if (existingReaction) {
             if (existingReaction.reaction === reaction) {
                 await existingReaction.destroy();
-                // Decrement the counter for this reaction type
                 await db.posts.increment(
                     { [`${reaction}sCount`]: -1 },
                     { where: { id: postId } }
                 );
-                return res.status(200).json({ message: 'Reaction removed' });
+                result = { status: 200, message: 'Reaction removed' };
+                // No notification for removing reactions
             } else {
-                // Decrement old reaction, increment new reaction
                 await db.posts.increment(
                     { [`${existingReaction.reaction}sCount`]: -1 },
                     { where: { id: postId } }
@@ -536,17 +552,50 @@ router.put('/reaction', async (req, res) => {
                     { [`${reaction}sCount`]: 1 },
                     { where: { id: postId } }
                 );
-                return res.status(200).json({ message: 'Reaction updated' });
+                result = { status: 200, message: 'Reaction updated' };
+                notificationType = `reaction_${reaction}`;
             }
         } else {
             await db.post_reactions.create({ postId, userId, reaction });
-            // Increment the counter for this reaction type
             await db.posts.increment(
                 { [`${reaction}sCount`]: 1 },
                 { where: { id: postId } }
             );
-            return res.status(201).json({ message: 'Reaction added' });
+            result = { status: 201, message: 'Reaction added' };
+            notificationType = `reaction_${reaction}`;
         }
+
+        // Send notification if it's not the author's own post and we're adding/updating a reaction
+        if (!isOwnPost && notificationType) {
+            try {
+                // Create notification record
+                const notification = await db.notifications.create({
+                    userId: post.userId, // Post author receives the notification
+                    senderId: userId, // Reactor is the sender
+                    type: notificationType, // Type of notification
+                    entityId: postId, // ID of the post
+                    content: `${reactor.username} reacted with ${reaction} to your post`,
+                    isRead: false,
+                    createdAt: new Date(),
+                });
+
+                // Send real-time notification via WebSocket
+                wsService?.sendNotification(post.userId.toString(), {
+                    id: notification.id,
+                    type: notificationType,
+                    senderId: userId,
+                    senderName: reactor.username,
+                    entityId: postId,
+                    content: `${reactor.username} reacted with ${reaction} to your post`,
+                    createdAt: notification.createdAt,
+                });
+            } catch (notifError) {
+                console.error('Failed to send notification:', notifError);
+                // Don't fail the API call if notification sending fails
+            }
+        }
+
+        return res.status(result.status).json({ message: result.message });
     } catch (err) {
         console.error('/reaction error: ', err);
         res.status(500).json({ error: 'Could not process reaction' });

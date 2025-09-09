@@ -829,13 +829,8 @@ router.delete('/:commentId', authenticate, async (req, res) => {
 
 router.put('/reaction', authenticate, async (req, res) => {
     try {
-        let { commentId, reaction } = req.body;
-        commentId = Number(commentId);
         const userId = req.userId;
-
-        if (!userId) {
-            return res.status(401).json({ error: 'User not authenticated' });
-        }
+        const { commentId, reaction } = req.body;
 
         if (!commentId) {
             return res.status(400).json({ error: 'No commentId provided' });
@@ -845,65 +840,78 @@ router.put('/reaction', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Invalid reaction type' });
         }
 
-        // Ensure comment exists
+        // Get comment to find author
         const comment = await db.post_comments.findByPk(commentId);
         if (!comment) {
             return res.status(404).json({ error: 'Comment not found' });
         }
 
+        // Don't notify if the author is reacting to their own comment
+        const isOwnComment = comment.userId === userId;
+
+        // Get reactor's username
+        const reactor = await db.users.findByPk(userId, {
+            attributes: ['username'],
+        });
+
         const existingReaction = await db.comment_reactions.findOne({
             where: { commentId, userId },
         });
 
+        let result;
+        let notificationType;
+
         if (existingReaction) {
             if (existingReaction.reaction === reaction) {
-                // Remove reaction
                 await existingReaction.destroy();
-                await db.post_comments.increment(
-                    { [`${reaction}sCount`]: -1 },
-                    { where: { id: commentId } }
-                );
+                result = { status: 200, message: 'Reaction removed' };
+                // No notification for removing reactions
             } else {
-                // Change reaction type
-                await db.post_comments.increment(
-                    { [`${existingReaction.reaction}sCount`]: -1 },
-                    { where: { id: commentId } }
-                );
                 existingReaction.reaction = reaction;
                 await existingReaction.save();
-                await db.post_comments.increment(
-                    { [`${reaction}sCount`]: 1 },
-                    { where: { id: commentId } }
-                );
+                result = { status: 200, message: 'Reaction updated' };
+                notificationType = `comment_reaction_${reaction}`;
             }
         } else {
-            // Add new reaction
             await db.comment_reactions.create({ commentId, userId, reaction });
-            await db.post_comments.increment(
-                { [`${reaction}sCount`]: 1 },
-                { where: { id: commentId } }
-            );
+            result = { status: 201, message: 'Reaction added' };
+            notificationType = `comment_reaction_${reaction}`;
         }
 
-        // Update totalReactions by summing all reaction counts in post_comments
-        const updatedComment = await db.post_comments.findByPk(commentId);
-        const totalReactions =
-            (updatedComment.likesCount || 0) +
-            (updatedComment.dislikesCount || 0) +
-            (updatedComment.laughsCount || 0) +
-            (updatedComment.angersCount || 0);
+        // Send notification if not reacting to own comment and we're adding/updating a reaction
+        if (!isOwnComment && notificationType) {
+            try {
+                // Create notification record
+                const notification = await db.notifications.create({
+                    userId: comment.userId, // Comment author receives the notification
+                    senderId: userId, // Reactor is the sender
+                    type: notificationType, // Type of notification
+                    entityId: commentId, // ID of the comment
+                    content: `${reactor.username} reacted with ${reaction} to your comment`,
+                    isRead: false,
+                    createdAt: new Date(),
+                });
 
-        await db.post_comments.update(
-            { totalReactions },
-            { where: { id: commentId } }
-        );
+                // Send real-time notification via WebSocket
+                wsService?.sendNotification(comment.userId.toString(), {
+                    id: notification.id,
+                    type: notificationType,
+                    senderId: userId,
+                    senderName: reactor.username,
+                    entityId: commentId,
+                    content: `${reactor.username} reacted with ${reaction} to your comment`,
+                    createdAt: notification.createdAt,
+                });
+            } catch (notifError) {
+                console.error('Failed to send notification:', notifError);
+                // Don't fail the API call if notification sending fails
+            }
+        }
 
-        return res.status(200).json({ message: 'Reaction processed' });
+        return res.status(result.status).json({ message: result.message });
     } catch (err) {
-        console.error('could not put /comments/reaction/:commentId: ', err);
-        res.status(500).json({
-            error: 'could not put /comments/reaction/:commentId',
-        });
+        console.error('/comment/reaction error: ', err);
+        res.status(500).json({ error: 'Could not process comment reaction' });
     }
 });
 
