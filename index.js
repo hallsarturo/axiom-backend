@@ -20,12 +20,15 @@ import { router as dashboardRouter } from './api/dashboard/dashboard.js';
 import { router as postsRouter } from './api/posts/posts.js';
 import { router as commentsRouter } from './api/comments/comments.js';
 import { router as searchRouter } from './api/search/search.js';
+import { router as notificationsRouter } from './api/notifications/notifications.js';
+import { router as chatRouter } from './api/chat/chat.js';
 import Sequelize from 'sequelize';
 import helmet from 'helmet';
 import './api/auth/auth.js';
 import config from './config/config.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
+import initWebsocket from './lib/websocket-server.js';
 
 dotenv.config();
 const app = express();
@@ -154,6 +157,8 @@ app.use(
 app.use('/api/search', searchRouter);
 app.use('/api/posts', postsRouter);
 app.use('/api/comments', commentsRouter);
+app.use('/api/notifications', notificationsRouter);
+app.use('/api/chat', chatRouter);
 app.post('/api/logout', function (req, res, next) {
     req.logout(function (err) {
         if (err) {
@@ -190,9 +195,16 @@ const httpServer = http.createServer(app);
 const httpsServer = https.createServer(options, app);
 httpServer.on('error', (err) => console.error(err));
 
+// Initialize Websocket with the HTTPS server
+const wsService = initWebsocket(httpsServer);
+
 // httpServer.listen(port, () => {
 //     console.log(`Server ready HTTP, app listening on port ${port}`);
 // });
+
+// Export the WebSocket service for use in other parts of the application
+export { wsService };
+
 httpsServer.listen(securePort, () => {
     console.log(`Server ready HTTPS, app listening on port ${securePort}`);
 });
