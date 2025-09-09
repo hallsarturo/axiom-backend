@@ -4,6 +4,88 @@ import authenticate from '../../lib/authenticate.js';
 
 const router = Router();
 
+/**
+ * @swagger
+ * /api/notifications/user/{userId}:
+ *   get:
+ *     tags:
+ *       - Notifications
+ *     summary: Get notifications for a user
+ *     description: Returns the latest notifications for the specified user. Only the authenticated user can access their own notifications.
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the user whose notifications are being fetched
+ *     responses:
+ *       200:
+ *         description: List of notifications and unseen count
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 notifications:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       userId:
+ *                         type: integer
+ *                       senderId:
+ *                         type: integer
+ *                         nullable: true
+ *                       type:
+ *                         type: string
+ *                       entityId:
+ *                         type: integer
+ *                         nullable: true
+ *                       content:
+ *                         type: string
+ *                         nullable: true
+ *                       isRead:
+ *                         type: boolean
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       sender:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           username:
+ *                             type: string
+ *                           userProfilePic:
+ *                             type: string
+ *                             nullable: true
+ *                 unseenCount:
+ *                   type: integer
+ *                   description: Number of unseen notifications
+ *       403:
+ *         description: Forbidden (user cannot access another user's notifications)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Forbidden
+ *       500:
+ *         description: Failed to fetch notifications
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+
 // Get user's notifications
 router.get('/user/:userId', authenticate, async (req, res) => {
     try {
@@ -40,6 +122,58 @@ router.get('/user/:userId', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch notifications' });
     }
 });
+
+/**
+ * @swagger
+ * /api/notifications/read:
+ *   put:
+ *     tags:
+ *       - Notifications
+ *     summary: Mark notifications as read
+ *     description: Marks the specified notifications as read for the authenticated user.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               notificationIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: Array of notification IDs to mark as read
+ *     responses:
+ *       200:
+ *         description: Notifications marked as read
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Notifications marked as read
+ *       400:
+ *         description: Invalid request body
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid request body
+ *       500:
+ *         description: Failed to update notifications
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
 
 // Mark notifications as read
 router.put('/read', authenticate, async (req, res) => {
