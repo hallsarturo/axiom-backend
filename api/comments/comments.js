@@ -700,16 +700,41 @@ router.delete('/:commentId', authenticate, async (req, res) => {
 
         const postId = existingComment.postId;
 
-        // Delete the comment
+        // Find all child comments recursively
+        async function getAllChildCommentIds(parentId) {
+            const children = await db.post_comments.findAll({
+                where: { parentCommentId: parentId },
+                attributes: ['id'],
+            });
+            let ids = children.map((c) => c.id);
+            for (const childId of ids) {
+                const grandChildren = await getAllChildCommentIds(childId);
+                ids = ids.concat(grandChildren);
+            }
+            return ids;
+        }
+
+        const childCommentIds = await getAllChildCommentIds(commentId);
+
+        // Delete all child comments (cascade)
+        if (childCommentIds.length > 0) {
+            await db.post_comments.destroy({
+                where: { id: childCommentIds },
+            });
+        }
+
+        // Delete the parent comment
         await existingComment.destroy();
 
         // Decrement the commentsCount in the related post
         await db.posts.increment(
-            { commentsCount: -1 },
+            { commentsCount: -(1 + childCommentIds.length) },
             { where: { id: postId } }
         );
 
-        return res.status(200).json({ message: 'Comment removed' });
+        return res
+            .status(200)
+            .json({ message: 'Comment and its children removed' });
     } catch (err) {
         console.error('/comments/:commentId error: ', err);
         res.status(500).json({ error: 'Could not process comment' });
