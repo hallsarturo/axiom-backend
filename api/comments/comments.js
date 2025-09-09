@@ -2,6 +2,7 @@ import { Router } from 'express';
 import db from '../../models/index.js';
 import jwt from 'jsonwebtoken';
 import authenticate from '../../lib/authenticate.js';
+import { wsService } from '../../index.js';
 
 const router = Router();
 
@@ -612,6 +613,11 @@ router.post('/:postId', authenticate, async (req, res) => {
         const postId = Number(req.params.postId);
         const { content, parentCommentId } = req.body;
 
+        const post = await db.posts.findByPk(postId);
+        if (!post) {
+            return res.status(404).json({ error: 'Post not found' });
+        }
+
         const newComment = await db.post_comments.create({
             postId,
             userId,
@@ -623,6 +629,37 @@ router.post('/:postId', authenticate, async (req, res) => {
             { commentsCount: +1 },
             { where: { id: postId } }
         );
+
+        // Get commenter's username for the notification
+        const commenter = await db.users.findByPk(userId, {
+            attributes: ['username'],
+        });
+
+        // Only notify if commenter is not the post author
+        if (post.userId !== userId) {
+            // Create notification in database
+            const notification = await db.notifications.create({
+                userId: post.userId,
+                senderId: userId,
+                type: 'comment',
+                entityId: postId,
+                content: content.substring(0, 100), // Preview of comment content
+                isRead: false,
+                createdAt: new Date(),
+            });
+
+            // Send real-time notification via WebSocket
+            wsService?.sendNotification(post.userId.toString(), {
+                id: notification.id,
+                type: 'comment',
+                senderId: userId,
+                senderName: commenter.username,
+                entityId: postId,
+                content: content.substring(0, 100),
+                createdAt: notification.createdAt,
+            });
+        }
+
         return res
             .status(201)
             .json({ message: 'Comment added', comment: newComment });
