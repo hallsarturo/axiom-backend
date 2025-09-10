@@ -142,11 +142,20 @@ router.put('/preferences', authenticate, async (req, res) => {
                 where: { userId: req.userId },
             });
             // Add new preferences
-            for (const categoryId of categories) {
-                await db.user_category_preferences.create({
-                    userId: req.userId,
-                    categoryId,
-                });
+            for (const cat of categories) {
+                const categoryId =
+                    typeof cat === 'object' ? cat.categoryId : cat;
+                const philarchiveCategoryId =
+                    typeof cat === 'object'
+                        ? cat.philarchiveCategoryId || null
+                        : null;
+                if (categoryId) {
+                    await db.user_category_preferences.create({
+                        userId: req.userId,
+                        categoryId,
+                        philarchiveCategoryId,
+                    });
+                }
             }
         }
 
