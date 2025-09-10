@@ -129,11 +129,11 @@ router.get('/user/:userId', authenticate, async (req, res) => {
                 };
             })
         );
-        enrichedNotifications.forEach((notif) => {
-            console.log(
-                `backend pics: ${notif.sender?.userProfilePic} and ${notif.sender?.photoUrl}`
-            );
-        });
+        // enrichedNotifications.forEach((notif) => {
+        //     console.log(
+        //         `backend pics: ${notif.sender?.userProfilePic} and ${notif.sender?.photoUrl}`
+        //     );
+        // });
 
         const unseenCount = await db.notifications.count({
             where: { userId, isRead: false },
