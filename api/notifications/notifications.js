@@ -11,7 +11,7 @@ const router = Router();
  *     tags:
  *       - Notifications
  *     summary: Get notifications for a user
- *     description: Returns the latest notifications for the specified user. Only the authenticated user can access their own notifications.
+ *     description: Returns the latest notifications for the specified user. Only the authenticated user can access their own notifications. If the sender's userProfilePic is null, photoUrl from auth_providers is included.
  *     parameters:
  *       - in: path
  *         name: userId
@@ -62,6 +62,9 @@ const router = Router();
  *                           userProfilePic:
  *                             type: string
  *                             nullable: true
+ *                           photoUrl:
+ *                             type: string
+ *                             nullable: true
  *                 unseenCount:
  *                   type: integer
  *                   description: Number of unseen notifications
@@ -109,12 +112,35 @@ router.get('/user/:userId', authenticate, async (req, res) => {
             ],
         });
 
+        // Enrich notifications with photoUrl from auth_providers if userProfilePic is null
+        const enrichedNotifications = await Promise.all(
+            notifications.map(async (notif) => {
+                let sender = notif.sender?.toJSON?.() || notif.sender || {};
+                if (!sender.userProfilePic) {
+                    const provider = await db.auth_providers.findOne({
+                        where: { userId: sender.id },
+                        attributes: ['photoUrl'],
+                    });
+                    sender.userProfilePic = provider?.photoUrl || null;
+                }
+                return {
+                    ...notif.toJSON(),
+                    sender,
+                };
+            })
+        );
+        enrichedNotifications.forEach((notif) => {
+            console.log(
+                `backend pics: ${notif.sender?.userProfilePic} and ${notif.sender?.photoUrl}`
+            );
+        });
+
         const unseenCount = await db.notifications.count({
             where: { userId, isRead: false },
         });
 
         res.status(200).json({
-            notifications,
+            notifications: enrichedNotifications,
             unseenCount,
         });
     } catch (err) {
