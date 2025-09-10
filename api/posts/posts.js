@@ -686,14 +686,27 @@ router.put('/reaction', async (req, res) => {
 
 router.get('/:postId', async (req, res) => {
     const { postId } = req.params;
-    let userId;
+    let currentUserId;
+    let token;
 
-    if (process.env.NODE_ENV === 'development') {
-        userId = req.query?.userId || req.user?.id; // Use query param for dev
-        // console.log('Req userId: ', userId);
+    // Extract token for user context (agnostic to post type)
+    if (process.env.NODE_ENV === 'production') {
+        token = req.cookies?.token;
     } else {
-        userId = req.user?.id;
-        // console.log('Req  else userId: ', userId);
+        const authHeader = req.headers?.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.replace('Bearer ', '');
+        } else {
+            token = req.cookies?.token;
+        }
+    }
+    if (token) {
+        try {
+            const payload = jwt.verify(token, process.env.JWT_SECRET);
+            currentUserId = payload.id;
+        } catch (err) {
+            currentUserId = undefined;
+        }
     }
 
     try {
@@ -702,44 +715,56 @@ router.get('/:postId', async (req, res) => {
             return res.status(404).json({ error: 'Post not found' });
         }
 
-        const likes = await db.post_reactions.count({
-            where: { postId, reaction: 'like' },
-        });
-        const dislikes = await db.post_reactions.count({
-            where: { postId, reaction: 'dislike' },
-        });
-        const laughs = await db.post_reactions.count({
-            where: { postId, reaction: 'laugh' },
-        });
-        const angers = await db.post_reactions.count({
-            where: { postId, reaction: 'anger' },
-        });
-
-        // Calculate totalReactions for this post
+        // Get all reactions counts
+        const likes = post.likesCount || 0;
+        const dislikes = post.dislikesCount || 0;
+        const laughs = post.laughsCount || 0;
+        const angers = post.angersCount || 0;
+        const comments = post.commentsCount || 0;
+        const shares = post.sharesCount || 0;
         const totalReactions = likes + dislikes + laughs + angers;
-        //console.log(`Post ${postId} totalReactions:`, totalReactions);
 
-        let currentUserReaction = null;
-        if (userId) {
-            const reactionObj = await db.post_reactions.findOne({
-                where: { postId, userId },
+        // Get total bookmarks for this post
+        const totalBookmarks = await db.post_bookmarks.count({
+            where: { postId },
+        });
+
+        // Get bookmarks for this post (for current user)
+        let isBookmarked = false;
+        if (currentUserId) {
+            const bookmark = await db.post_bookmarks.findOne({
+                where: { postId, userId: currentUserId },
             });
-            currentUserReaction = reactionObj ? reactionObj.reaction : null;
+            isBookmarked = !!bookmark;
         }
 
-        const { abstract, content, ...postData } = post.toJSON();
+        // Get author profile pic
+        const authorProfilePic = await getUserProfilePic(post.userId);
 
-        const response = {
-            ...postData,
+        // Compose enriched response
+        const { abstract, content, image, ...postData } = post.toJSON();
+
+        res.json({
+            postId: post.id,
+            id: post.id,
+            userId: post.userId,
+            title: post.title,
+            description: post.description,
+            author: post.author,
+            imgSrc: image || null,
+            authorProfilePic,
+            createdAt: post.createdAt,
+            type: post.type,
+            totalReactions,
             likes,
             dislikes,
             laughs,
             angers,
-            totalReactions,
-            currentUserReaction,
-        };
-
-        res.json(response);
+            comments,
+            shares,
+            isBookmarked,
+            totalBookmarks,
+        });
     } catch (err) {
         console.error('/:postId error: ', err);
         res.status(500).json({ error: 'Server error' });
