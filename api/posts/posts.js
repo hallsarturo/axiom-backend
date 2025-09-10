@@ -17,7 +17,7 @@ const router = Router();
  *     tags:
  *       - Posts
  *     summary: Get paginated paper posts
- *     description: Retrieve paginated posts of type 'paper' with reaction and engagement statistics. Supports infinite scrolling via pagination. Optionally returns isBookmarked if userId is provided.
+ *     description: Retrieve paginated posts of type 'paper' with reaction and engagement statistics. Supports infinite scrolling via pagination. If the user is authenticated, each post will include isBookmarked and totalBookmarks.
  *     parameters:
  *       - in: query
  *         name: page
@@ -29,14 +29,9 @@ const router = Router();
  *         name: pageSize
  *         schema:
  *           type: integer
- *           default: 50
- *           maximum: 200
- *         description: Number of posts per page (max 200)
- *       - in: query
- *         name: userId
- *         schema:
- *           type: integer
- *         description: Optional user ID to check if each post is bookmarked
+ *           default: 20
+ *           maximum: 50
+ *         description: Number of posts per page (max 50)
  *     responses:
  *       200:
  *         description: List of paginated paper posts with stats
@@ -56,19 +51,19 @@ const router = Router();
  *                         type: string
  *                       description:
  *                         type: string
- *                       abstract:
- *                         type: string
- *                       image:
- *                         type: string
  *                       identifier:
  *                         type: string
  *                       author:
  *                         type: string
- *                       subject:
+ *                       image:
  *                         type: string
- *                       publishedAt:
+ *                       userId:
+ *                         type: integer
+ *                       createdAt:
  *                         type: string
  *                         format: date-time
+ *                       type:
+ *                         type: string
  *                       totalReactions:
  *                         type: integer
  *                       likes:
@@ -85,7 +80,10 @@ const router = Router();
  *                         type: integer
  *                       isBookmarked:
  *                         type: boolean
- *                         description: True if the post is bookmarked by the userId provided
+ *                         description: True if the post is bookmarked by the authenticated user
+ *                       totalBookmarks:
+ *                         type: integer
+ *                         description: Total number of bookmarks for this post
  *                 pagination:
  *                   type: object
  *                   properties:
@@ -97,8 +95,6 @@ const router = Router();
  *                       type: integer
  *                     totalPages:
  *                       type: integer
- *       401:
- *         description: Unauthorized - JWT required
  *       500:
  *         description: Could not fetch posts
  */
@@ -164,13 +160,11 @@ router.get('/papers', async (req, res) => {
 
         // Get bookmarks only if userId is present
         let bookmarkedPostIds = [];
-        if (userId) {
-            const bookmarks = await db.post_bookmarks.findAll({
-                where: { userId, postId: postIds },
-                attributes: ['postId'],
-            });
-            bookmarkedPostIds = bookmarks.map((b) => b.postId);
-        }
+        const bookmarks = await db.post_bookmarks.findAll({
+            where: { postId: postIds },
+            attributes: ['postId', 'userId'],
+        });
+        bookmarkedPostIds = bookmarks.map((b) => b.postId);
 
         const postsWithStats = paperPosts.map((post) => {
             const postId = post.id;
@@ -187,11 +181,18 @@ router.get('/papers', async (req, res) => {
             const comments = post.commentsCount || 0;
             const shares = post.sharesCount || 0;
             const totalReactions = likes + dislikes + laughs + angers;
+            const totalBookmarks = bookmarkedPostIds.filter(
+                (id) => id === postId
+            ).length;
 
-            // Only return isBookmarked if userId is present
-            const isBookmarked = userId
-                ? bookmarkedPostIds.includes(postId)
-                : false;
+            // FIX: Correctly check if the logged-in user has bookmarked this post
+            let isBookmarked = false;
+            if (userId) {
+                // Check if the logged-in user has bookmarked this post
+                isBookmarked = bookmarks.some(
+                    (b) => b.postId === postId && b.userId === userId
+                );
+            }
 
             return {
                 ...postData,
@@ -204,6 +205,7 @@ router.get('/papers', async (req, res) => {
                 comments,
                 shares,
                 isBookmarked,
+                totalBookmarks,
             };
         });
 
@@ -316,7 +318,7 @@ router.get('/papers', async (req, res) => {
 
 router.get('/userposts', async (req, res) => {
     try {
-        let userId;
+        let currentUserId; // Renamed for clarity
         let token;
 
         // Try to extract token, but ignore if not present
@@ -335,9 +337,9 @@ router.get('/userposts', async (req, res) => {
         if (token) {
             try {
                 const payload = jwt.verify(token, process.env.JWT_SECRET);
-                userId = payload.id;
+                currentUserId = payload.id;
             } catch (err) {
-                userId = undefined; // Invalid token, treat as not logged in
+                currentUserId = undefined; // Invalid token, treat as not logged in
             }
         }
 
@@ -384,11 +386,16 @@ router.get('/userposts', async (req, res) => {
         const postsWithStats = await Promise.all(
             userPosts.map(async (post) => {
                 const postId = post.id;
-                const { abstract, content, image, userId, ...postData } =
-                    post.toJSON();
+                const {
+                    abstract,
+                    content,
+                    image,
+                    userId: authorId,
+                    ...postData
+                } = post.toJSON();
 
                 // Get user (author's) profile pic from posts userId
-                const profilePic = await getUserProfilePic(userId);
+                const profilePic = await getUserProfilePic(authorId);
 
                 // Use counts directly from the post record
                 const likes = post.likesCount || 0;
@@ -402,20 +409,22 @@ router.get('/userposts', async (req, res) => {
                     (id) => id === postId
                 ).length;
 
-                // Only return isBookmarked if userId is present
-                const isBookmarked =
-                    userId && bookmarkedPostIds.includes(postId, userId)
-                        ? true
-                        : false;
+                // Only return isBookmarked if logged-in user ID is present
+                let isBookmarked = false;
+                if (currentUserId) {
+                    // Check if the logged-in user has bookmarked this post
+                    isBookmarked = bookmarks.some(
+                        (b) => b.postId === postId && b.userId === currentUserId
+                    );
+                }
 
                 return {
                     postId,
                     ...postData,
-                    userId,
+                    userId: authorId, // Keep using userId for consistency
                     imgSrc: image ? image : null,
                     authorProfilePic: profilePic,
                     totalReactions,
-                    isBookmarked,
                     likes,
                     dislikes,
                     laughs,
