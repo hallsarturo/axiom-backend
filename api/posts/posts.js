@@ -101,10 +101,10 @@ const router = Router();
 
 router.get('/papers', async (req, res) => {
     try {
-        let userId;
+        let currentUserId;
         let token;
 
-        // Try to extract token, but ignore if not present
+        // Extract token, but ignore if not present
         if (process.env.NODE_ENV === 'production') {
             token = req.cookies?.token;
         } else {
@@ -120,16 +120,39 @@ router.get('/papers', async (req, res) => {
         if (token) {
             try {
                 const payload = jwt.verify(token, process.env.JWT_SECRET);
-                userId = payload.id;
+                currentUserId = payload.id;
             } catch (err) {
-                userId = undefined; // Invalid token, treat as not logged in
+                currentUserId = undefined;
             }
         }
+
+        // Get user's preferred categories if logged in
+        // let preferredCategoryIds = [];
+        // if (currentUserId) {
+        //     const prefs = await db.user_category_preferences.findAll({
+        //         where: { userId: currentUserId },
+        //         attributes: ['categoryId'],
+        //     });
+        //     preferredCategoryIds = prefs.map((pref) => pref.categoryId);
+        // }
 
         // Pagination
         const page = parseInt(req.query.page, 10) || 1;
         const pageSize = Math.min(parseInt(req.query.pageSize, 10) || 20, 50);
         const offset = (page - 1) * pageSize;
+
+        // Build where clause for filtering by preferred categories
+        let whereClause = { type: 'paper' };
+        let include = [];
+        // if (preferredCategoryIds.length > 0) {
+        //     whereClause['$post_categories.categoryId$'] = preferredCategoryIds;
+        //     include = [
+        //         {
+        //             model: db.post_categories,
+        //             attributes: [],
+        //         },
+        //     ];
+        // }
 
         // Get posts with stats directly from posts table
         const { count, rows: paperPosts } = await db.posts.findAndCountAll({
@@ -150,15 +173,17 @@ router.get('/papers', async (req, res) => {
                 'commentsCount',
                 'sharesCount',
             ],
-            where: { type: 'paper' },
+            where: whereClause,
+            include,
             order: [['createdAt', 'DESC']],
             limit: pageSize,
             offset,
+            distinct: true,
         });
 
         const postIds = paperPosts.map((post) => post.id);
 
-        // Get bookmarks only if userId is present
+        // Get bookmarks for these posts
         let bookmarkedPostIds = [];
         const bookmarks = await db.post_bookmarks.findAll({
             where: { postId: postIds },
@@ -173,7 +198,6 @@ router.get('/papers', async (req, res) => {
                 ? post.identifier.replace(/^oai:/, '')
                 : post.identifier;
 
-            // Use counts directly from the post record
             const likes = post.likesCount || 0;
             const dislikes = post.dislikesCount || 0;
             const laughs = post.laughsCount || 0;
@@ -185,12 +209,10 @@ router.get('/papers', async (req, res) => {
                 (id) => id === postId
             ).length;
 
-            // FIX: Correctly check if the logged-in user has bookmarked this post
             let isBookmarked = false;
-            if (userId) {
-                // Check if the logged-in user has bookmarked this post
+            if (currentUserId) {
                 isBookmarked = bookmarks.some(
-                    (b) => b.postId === postId && b.userId === userId
+                    (b) => b.postId === postId && b.userId === currentUserId
                 );
             }
 
