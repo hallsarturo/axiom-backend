@@ -229,7 +229,7 @@ router.get('/papers', async (req, res) => {
  *     tags:
  *       - Posts
  *     summary: Get paginated user posts
- *     description: Retrieve paginated posts of type 'user' with reaction and engagement statistics. If the user is authenticated, each post will include isBookmarked.
+ *     description: Retrieve paginated posts of type 'user' with reaction and engagement statistics. If the user is authenticated, each post will include isBookmarked and totalBookmarks.
  *     parameters:
  *       - in: query
  *         name: page
@@ -296,6 +296,9 @@ router.get('/papers', async (req, res) => {
  *                       isBookmarked:
  *                         type: boolean
  *                         description: True if the post is bookmarked by the authenticated user
+ *                       totalBookmarks:
+ *                         type: integer
+ *                         description: Total number of bookmarks for this post
  *                 pagination:
  *                   type: object
  *                   properties:
@@ -371,13 +374,11 @@ router.get('/userposts', async (req, res) => {
 
         // Get bookmarks only if userId is present
         let bookmarkedPostIds = [];
-        if (userId) {
-            const bookmarks = await db.post_bookmarks.findAll({
-                where: { userId, postId: postIds },
-                attributes: ['postId'],
-            });
-            bookmarkedPostIds = bookmarks.map((b) => b.postId);
-        }
+        const bookmarks = await db.post_bookmarks.findAll({
+            where: { postId: postIds },
+            attributes: ['postId', 'userId'],
+        });
+        bookmarkedPostIds = bookmarks.map((b) => b.postId);
 
         // Map the counts to each post
         const postsWithStats = await Promise.all(
@@ -397,11 +398,15 @@ router.get('/userposts', async (req, res) => {
                 const comments = post.commentsCount || 0;
                 const shares = post.sharesCount || 0;
                 const totalReactions = likes + dislikes + laughs + angers;
+                const totalBookmarks = bookmarkedPostIds.filter(
+                    (id) => id === postId
+                ).length;
 
                 // Only return isBookmarked if userId is present
-                const isBookmarked = userId
-                    ? bookmarkedPostIds.includes(postId)
-                    : false;
+                const isBookmarked =
+                    userId && bookmarkedPostIds.includes(postId, userId)
+                        ? true
+                        : false;
 
                 return {
                     postId,
@@ -418,6 +423,7 @@ router.get('/userposts', async (req, res) => {
                     comments,
                     shares,
                     isBookmarked,
+                    totalBookmarks,
                 };
             })
         );
