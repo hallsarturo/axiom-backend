@@ -19,7 +19,10 @@ export default (sequelize, DataTypes) => {
     );
 
     PostBookmark.associate = (db) => {
-        PostBookmark.belongsTo(db.posts, { foreignKey: 'postId' });
+        PostBookmark.belongsTo(db.posts, {
+            foreignKey: 'postId',
+            onDelete: 'CASCADE',
+        });
         PostBookmark.belongsTo(db.users, { foreignKey: 'userId' });
     };
 
