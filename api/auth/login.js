@@ -88,7 +88,7 @@ router.post('/', async (req, res) => {
                     username: user.username,
                 },
                process.env.JWT_SECRET,
-                { expiresIn: '1h' }
+                { expiresIn: '30d' }
             );
             if (process.env.NODE_ENV === 'production') {
                 // Send JWT as httpOnly cookie in production

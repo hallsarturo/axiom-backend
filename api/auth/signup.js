@@ -233,7 +233,7 @@ router.post('/verify', async (req, res) => {
                         verified: true,
                     },
                     process.env.JWT_SECRET,
-                    { expiresIn: '10h' }
+                    { expiresIn: '30d' }
                 );
                 return res
                     .cookie('token', verifiedToken, {

@@ -172,7 +172,7 @@ router.get(
                 isVerified: true,
             },
             process.env.JWT_SECRET,
-            { expiresIn: '10h' }
+            { expiresIn: '30d' }
         );
 
         if (process.env.NODE_ENV === 'production') {
