@@ -440,6 +440,16 @@ router.get('/userposts', async (req, res) => {
                     );
                 }
 
+                // Get current user's reaction for this post
+                let currentReactionIcon = null;
+                if (currentUserId) {
+                    const reaction = await db.post_reactions.findOne({
+                        where: { postId, userId: currentUserId },
+                        attributes: ['reaction'],
+                    });
+                    currentReactionIcon = reaction ? reaction.reaction : null;
+                }
+
                 return {
                     postId,
                     ...postData,
@@ -455,6 +465,7 @@ router.get('/userposts', async (req, res) => {
                     shares,
                     isBookmarked,
                     totalBookmarks,
+                    currentReactionIcon,
                 };
             })
         );
@@ -760,6 +771,16 @@ router.get('/:postId', async (req, res) => {
             isBookmarked = !!bookmark;
         }
 
+        // Get current user's reaction for this post
+        let currentUserReaction = null;
+        if (currentUserId) {
+            const reaction = await db.post_reactions.findOne({
+                where: { postId, userId: currentUserId },
+                attributes: ['reaction'],
+            });
+            currentUserReaction = reaction ? reaction.reaction : null;
+        }
+
         // Get author profile pic
         const authorProfilePic = await getUserProfilePic(post.userId);
 
@@ -772,6 +793,7 @@ router.get('/:postId', async (req, res) => {
             userId: post.userId,
             title: post.title,
             description: post.description,
+            content, 
             author: post.author,
             imgSrc: image || null,
             authorProfilePic,
@@ -786,6 +808,7 @@ router.get('/:postId', async (req, res) => {
             shares,
             isBookmarked,
             totalBookmarks,
+            currentUserReaction, 
         });
     } catch (err) {
         console.error('/:postId error: ', err);
