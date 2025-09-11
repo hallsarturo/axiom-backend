@@ -1194,6 +1194,101 @@ router.delete('/:postId', authenticate, async (req, res) => {
 
 /**
  * @swagger
+ * /api/posts/bookmarks/{userId}:
+ *   get:
+ *     tags:
+ *       - Posts
+ *     summary: Get all bookmarked posts by user ID
+ *     description: Returns all posts bookmarked by the specified user. Requires authentication.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the user whose bookmarks to fetch
+ *     responses:
+ *       200:
+ *         description: List of bookmarked posts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 posts:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       title:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       author:
+ *                         type: string
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       type:
+ *                         type: string
+ *                       image:
+ *                         type: string
+ *                 total:
+ *                   type: integer
+ *                   description: Total number of bookmarked posts
+ *       500:
+ *         description: Could not fetch bookmarks
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+
+router.get('/bookmarks-personal/:userId', async (req, res) => {
+    try {
+        let userId = Number(req.params.userId);
+
+        const bookmarks = await db.post_bookmarks.findAll({
+            where: { userId },
+            attributes: ['postId'],
+        });
+        //console.log('\n\n/bookmarks/:userId: BOOKMARKS', bookmarks); // Log bookmarks, not posts
+
+        const postIds = bookmarks.map((b) => b.postId);
+        //console.log('\n\n/bookmarks/:userId: POSTID', postIds); // Log postIds, not posts
+
+        const posts = await db.posts.findAll({
+            where: { id: postIds },
+            attributes: [
+                'id',
+                'type',
+                'author',
+                'title',
+                'description',
+                'content',
+                'image',
+                'createdAt',
+            ],
+            order: [['createdAt', 'DESC']],
+        });
+
+        //console.log('\n\n/bookmarks/:userId: POSTS', posts);
+        res.status(200).json({ posts, total: posts.length });
+    } catch (err) {
+        console.error('/bookmarks/:userId error:', err);
+        res.status(500).json({ error: 'Could not fetch bookmarks' });
+    }
+});
+
+/**
+ * @swagger
  * /api/posts/bookmark/{postId}:
  *   put:
  *     tags:
@@ -1276,101 +1371,6 @@ router.put('/bookmark/:postId', authenticate, async (req, res) => {
     } catch (err) {
         console.error('/bookmark/:postId put error: ', err);
         res.status(500).json({ error: 'Server error' });
-    }
-});
-
-/**
- * @swagger
- * /api/posts/bookmarks/{userId}:
- *   get:
- *     tags:
- *       - Posts
- *     summary: Get all bookmarked posts by user ID
- *     description: Returns all posts bookmarked by the specified user. Requires authentication.
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: userId
- *         required: true
- *         schema:
- *           type: integer
- *         description: The ID of the user whose bookmarks to fetch
- *     responses:
- *       200:
- *         description: List of bookmarked posts
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 posts:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                       title:
- *                         type: string
- *                       description:
- *                         type: string
- *                       author:
- *                         type: string
- *                       createdAt:
- *                         type: string
- *                         format: date-time
- *                       type:
- *                         type: string
- *                       image:
- *                         type: string
- *                 total:
- *                   type: integer
- *                   description: Total number of bookmarked posts
- *       500:
- *         description: Could not fetch bookmarks
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- */
-
-router.get('/bookmarks/:userId', authenticate, async (req, res) => {
-    try {
-        let userId;
-
-        if (process.env.NODE_ENV === 'development') {
-            userId = req.query?.userId || req.userId;
-        } else {
-            userId = req.userId;
-        }
-
-        const bookmarks = await db.post_bookmarks.findAll({
-            where: { userId },
-            include: [
-                {
-                    model: db.posts,
-                    attributes: [
-                        'id',
-                        'title',
-                        'description',
-                        'author',
-                        'createdAt',
-                        'type',
-                        'image',
-                    ],
-                },
-            ],
-        });
-        const posts = bookmarks.map((b) => b.post);
-
-        res.status(200).json({ posts, total: posts.length });
-    } catch (err) {
-        console.error('/bookmarks/:userId error:', err);
-        res.status(500).json({ error: 'Could not fetch bookmarks' });
     }
 });
 
