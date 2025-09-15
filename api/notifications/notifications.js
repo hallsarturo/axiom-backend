@@ -126,14 +126,12 @@ router.get('/user/:userId', authenticate, async (req, res) => {
                 return {
                     ...notif.toJSON(),
                     sender,
+                    postId: notif.postId,
+                    commentId: notif.commentId,
+                    entityId: notif.entityId,
                 };
             })
         );
-        // enrichedNotifications.forEach((notif) => {
-        //     console.log(
-        //         `backend pics: ${notif.sender?.userProfilePic} and ${notif.sender?.photoUrl}`
-        //     );
-        // });
 
         const unseenCount = await db.notifications.count({
             where: { userId, isRead: false },
