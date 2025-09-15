@@ -150,7 +150,7 @@ app.use('/api/signup', signupRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/user/followers', userFollowersRouter);
-app.use('/api/user/followings', userFollowingsRouter);
+app.use('/api/user/following', userFollowingsRouter);
 app.use('/api/user', userProfileRouter);
 app.use(
     '/uploads',

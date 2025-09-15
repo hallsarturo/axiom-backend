@@ -51,7 +51,7 @@ const router = Router();
  */
 
 // GET: Get users this user is following
-router.get('/:userId/following', async (req, res) => {
+router.get('/:userId', async (req, res) => {
     try {
         const userId = Number(req.params.userId);
         const following = await db.user_followers.findAll({
