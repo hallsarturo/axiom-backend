@@ -11,7 +11,7 @@ const router = Router();
  *     tags:
  *       - Followers
  *     summary: Get followers of a user
- *     description: Returns a list of users who follow the specified user, along with the total count.
+ *     description: Returns a list of users who follow the specified user, including profile info from users and authProviders tables.
  *     parameters:
  *       - in: path
  *         name: userId
@@ -36,6 +36,15 @@ const router = Router();
  *                         type: integer
  *                       username:
  *                         type: string
+ *                       userProfilePic:
+ *                         type: string
+ *                         nullable: true
+ *                       photoUrl:
+ *                         type: string
+ *                         nullable: true
+ *                       displayName:
+ *                         type: string
+ *                         nullable: true
  *                 totalFollowers:
  *                   type: integer
  *                   description: Total number of followers
@@ -51,89 +60,38 @@ router.get('/:userId', async (req, res) => {
                 {
                     model: db.users,
                     as: 'follower',
-                    attributes: ['id', 'username'],
+                    attributes: ['id', 'username', 'userProfilePic'],
                 },
             ],
         });
+
+        // Enrich with photoUrl and displayName from authProviders
+        const enrichedFollowers = await Promise.all(
+            followers.map(async (f) => {
+                const follower = f.follower?.toJSON?.() || f.follower || {};
+                const provider = await db.auth_providers.findOne({
+                    where: { userId: follower.id },
+                    attributes: ['photoUrl', 'displayName'],
+                });
+                return {
+                    ...follower,
+                    photoUrl: provider?.photoUrl || null,
+                    displayName: provider?.displayName || null,
+                };
+            })
+        );
+
         res.json({
-            followers: followers.map((f) => f.follower),
+            followers: enrichedFollowers,
             totalFollowers: followers.length,
         });
-         console.log(
-            'Followers:',
-            followers.map((f) => f.following)
-        );
-        console.log('TotalFollowers:', followers.length);
+        // console.log('Followers:', enrichedFollowers);
+        // console.log('TotalFollowers:', followers.length);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch followers' });
     }
 });
 
-/**
- * @swagger
- * /api/user/followers/{userId}/following:
- *   get:
- *     tags:
- *       - Followers
- *     summary: Get users this user is following
- *     description: Returns a list of users that the specified user is following, along with the total count.
- *     parameters:
- *       - in: path
- *         name: userId
- *         required: true
- *         schema:
- *           type: integer
- *         description: The ID of the user whose following list to fetch
- *     responses:
- *       200:
- *         description: List of users being followed and total count
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 following:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                       username:
- *                         type: string
- *                 totalFollowins:
- *                   type: integer
- *                   description: Total number of users being followed
- */
-
-// GET: Get users this user is following
-router.get('/:userId/following', async (req, res) => {
-    try {
-        const userId = Number(req.params.userId);
-        const following = await db.user_followers.findAll({
-            where: { followerId: userId },
-            include: [
-                {
-                    model: db.users,
-                    as: 'following',
-                    attributes: ['id', 'username'],
-                },
-            ],
-        });
-
-        res.json({
-            following: following.map((f) => f.following),
-            totalFollowings: following.length,
-        });
-        console.log(
-            'Following:',
-            following.map((f) => f.following)
-        );
-        console.log('TotalFollowings:', following.length);
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to fetch following' });
-    }
-});
 
 /**
  * @swagger

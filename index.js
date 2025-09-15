@@ -16,6 +16,7 @@ import { router as signupRouter } from './api/auth/signup.js';
 import { router as authRouter } from './api/auth/auth.js';
 import { router as userProfileRouter } from './api/user/user-profile.js';
 import { router as userFollowersRouter } from './api/user/followers.js';
+import { router as userFollowingsRouter } from './api/user/followings.js';
 import { router as dashboardRouter } from './api/dashboard/dashboard.js';
 import { router as postsRouter } from './api/posts/posts.js';
 import { router as commentsRouter } from './api/comments/comments.js';
@@ -149,6 +150,7 @@ app.use('/api/signup', signupRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/user/followers', userFollowersRouter);
+app.use('/api/user/followings', userFollowingsRouter);
 app.use('/api/user', userProfileRouter);
 app.use(
     '/uploads',
