@@ -45,6 +45,9 @@ const router = Router();
  *                       displayName:
  *                         type: string
  *                         nullable: true
+ *                       createdAt:
+ *                         type: string
+ *                         nullable: true
  *                 totalFollowings:
  *                   type: integer
  *                   description: Total number of users being followed
@@ -60,7 +63,12 @@ router.get('/:userId', async (req, res) => {
                 {
                     model: db.users,
                     as: 'following',
-                    attributes: ['id', 'username', 'userProfilePic'],
+                    attributes: [
+                        'id',
+                        'username',
+                        'userProfilePic',
+                        'createdAt',
+                    ],
                 },
             ],
         });

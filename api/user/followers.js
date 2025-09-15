@@ -45,6 +45,9 @@ const router = Router();
  *                       displayName:
  *                         type: string
  *                         nullable: true
+ *                       createdAt:
+ *                         type: string
+ *                         nullable: true
  *                 totalFollowers:
  *                   type: integer
  *                   description: Total number of followers
@@ -60,7 +63,12 @@ router.get('/:userId', async (req, res) => {
                 {
                     model: db.users,
                     as: 'follower',
-                    attributes: ['id', 'username', 'userProfilePic'],
+                    attributes: [
+                        'id',
+                        'username',
+                        'userProfilePic',
+                        'createdAt',
+                    ],
                 },
             ],
         });
@@ -91,7 +99,6 @@ router.get('/:userId', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch followers' });
     }
 });
-
 
 /**
  * @swagger
