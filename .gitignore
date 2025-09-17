@@ -5,5 +5,7 @@ npm-debug.log
 data/
 /public/uploads/*
 log/*
-log/access.log
 quick-start-combined.log
+quick-start-error.log
+log/access.log
+
