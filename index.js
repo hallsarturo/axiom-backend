@@ -1,3 +1,5 @@
+import './instrument.js';
+import * as Sentry from '@sentry/node';
 import dotenv from 'dotenv';
 import express from 'express';
 import morgan from 'morgan';
@@ -35,6 +37,28 @@ import initWebsocket from './lib/websocket-server.js';
 
 dotenv.config();
 const app = express();
+
+// SENTRY controllers
+app.get('/', function rootHandler(req, res) {
+    res.end('Hello world!');
+});
+Sentry.setupExpressErrorHandler(app);
+app.use(function onError(err, req, res, next) {
+    // The error id is attached to `res.sentry` to be returned
+    // and optionally displayed to the user for support.
+    res.statusCode = 500;
+    res.end(res.sentry + '\n');
+});
+
+// app.get('/debug-sentry', function mainHandler(req, res) {
+//     // Send a log before throwing the error
+//     Sentry.logger.info('User triggered test error', {
+//         action: 'test_error_endpoint',
+//     });
+//     throw new Error('My first Sentry error!');
+// });
+// end Sentry controllers
+
 const port = 4000;
 const securePort = 4010;
 const _log_dirname =
