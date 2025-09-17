@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import morgan from 'morgan';
+import logger from './lib/winston.js';
 import session from 'express-session';
 import * as rfs from 'rotating-file-stream';
 import fs from 'node:fs';
@@ -60,7 +61,7 @@ if (dbConfig.use_env_variable) {
             'Connection to PostgreSQL has been established successfully'
         );
     } catch (err) {
-        console.error('Unable to connect to PostgreSQL:', err);
+        logger.error('Unable to connect to PostgreSQL:', err);
         process.exit(1); // Optionally exit if DB is not available
     }
 })();
@@ -74,7 +75,12 @@ const accessLogStream = rfs.createStream('access.log', {
     size: '10M', // rotate after 10MB
     compress: 'gzip',
 });
-app.use(morgan('combined', { stream: accessLogStream }));
+app.use(
+    morgan('combined', {
+        stream: { write: (message) => logger.info(message.trim()) },
+    })
+);
+
 // JSON Parse
 app.use(express.json());
 //

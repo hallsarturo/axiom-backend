@@ -241,7 +241,7 @@ router.get('/papers', async (req, res) => {
             },
         });
     } catch (err) {
-        console.error(err);
+        logger.error(err);
         res.status(500).json({ error: 'Could not fetch posts' });
     }
 });
@@ -481,7 +481,7 @@ router.get('/userposts', async (req, res) => {
             },
         });
     } catch (err) {
-        console.error(err);
+        logger.error(err);
         res.status(500).json({ error: 'Could not fetch posts' });
     }
 });
@@ -638,14 +638,14 @@ router.put('/reaction', async (req, res) => {
                     createdAt: notification.createdAt,
                 });
             } catch (notifError) {
-                console.error('Failed to send notification:', notifError);
+                logger.error('Failed to send notification:', notifError);
                 // Don't fail the API call if notification sending fails
             }
         }
 
         return res.status(result.status).json({ message: result.message });
     } catch (err) {
-        console.error('/reaction error: ', err);
+        logger.error('/reaction error: ', err);
         res.status(500).json({ error: 'Could not process reaction' });
     }
 });
@@ -793,7 +793,7 @@ router.get('/:postId', async (req, res) => {
             userId: post.userId,
             title: post.title,
             description: post.description,
-            content, 
+            content,
             author: post.author,
             imgSrc: image || null,
             authorProfilePic,
@@ -808,10 +808,10 @@ router.get('/:postId', async (req, res) => {
             shares,
             isBookmarked,
             totalBookmarks,
-            currentUserReaction, 
+            currentUserReaction,
         });
     } catch (err) {
-        console.error('/:postId error: ', err);
+        logger.error('/:postId error: ', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -935,7 +935,7 @@ router.get('/user/:userId', async (req, res) => {
             },
         });
     } catch (err) {
-        console.error('/user/:userId posts error:', err);
+        logger.error('/user/:userId posts error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -1005,7 +1005,7 @@ router.get('/bookmarks/:postId', async (req, res) => {
 
         res.status(200).json({ postId: Number(postId), totalBookmarks });
     } catch (err) {
-        console.error('get /bookmarks/:postId error: ', err);
+        logger.error('get /bookmarks/:postId error: ', err);
         res.status(500), json({ error: 'Server error' });
     }
 });
@@ -1122,7 +1122,7 @@ router.post(
                 post: postWithImage,
             });
         } catch (err) {
-            console.error('/publish/usertype error:', err);
+            logger.error('/publish/usertype error:', err);
             res.status(500).json({ error: 'Could not create post' });
         }
     }
@@ -1210,7 +1210,7 @@ router.delete('/:postId', authenticate, async (req, res) => {
         await post.destroy();
         return res.status(200).json({ message: 'Post deleted successfully' });
     } catch (err) {
-        console.error('/:postId delete error: ', err);
+        logger.error('/:postId delete error: ', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -1305,7 +1305,7 @@ router.get('/bookmarks-personal/:userId', async (req, res) => {
         //console.log('\n\n/bookmarks/:userId: POSTS', posts);
         res.status(200).json({ posts, total: posts.length });
     } catch (err) {
-        console.error('/bookmarks/:userId error:', err);
+        logger.error('/bookmarks/:userId error:', err);
         res.status(500).json({ error: 'Could not fetch bookmarks' });
     }
 });
@@ -1392,7 +1392,7 @@ router.put('/bookmark/:postId', authenticate, async (req, res) => {
             return res.status(201).json({ message: 'Bookmark added' });
         }
     } catch (err) {
-        console.error('/bookmark/:postId put error: ', err);
+        logger.error('/bookmark/:postId put error: ', err);
         res.status(500).json({ error: 'Server error' });
     }
 });

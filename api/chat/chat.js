@@ -41,7 +41,7 @@ router.get('/history/:userId', authenticate, async (req, res) => {
 
         res.status(200).json({ messages });
     } catch (err) {
-        console.error('Error fetching chat history:', err);
+        logger.error('Error fetching chat history:', err);
         res.status(500).json({ error: 'Failed to fetch chat history' });
     }
 });
@@ -83,7 +83,7 @@ router.get('/conversations', authenticate, async (req, res) => {
 
         res.status(200).json({ conversations });
     } catch (err) {
-        console.error('Error fetching conversations:', err);
+        logger.error('Error fetching conversations:', err);
         res.status(500).json({ error: 'Failed to fetch conversations' });
     }
 });

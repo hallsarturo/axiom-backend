@@ -65,7 +65,7 @@ router.get('/categories/:parentId', async (req, res) => {
 
         res.status(200).json({ children });
     } catch (err) {
-        console.error("couldn't retrieve category children", err);
+        logger.error("couldn't retrieve category children", err);
         res.status(500).json({ error: "Couldn't retrieve category children" });
     }
 });

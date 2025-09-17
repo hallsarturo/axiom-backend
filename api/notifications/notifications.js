@@ -142,7 +142,7 @@ router.get('/user/:userId', authenticate, async (req, res) => {
             unseenCount,
         });
     } catch (err) {
-        console.error('Error fetching notifications:', err);
+        logger.error('Error fetching notifications:', err);
         res.status(500).json({ error: 'Failed to fetch notifications' });
     }
 });
@@ -220,7 +220,7 @@ router.put('/read', authenticate, async (req, res) => {
 
         res.status(200).json({ message: 'Notifications marked as read' });
     } catch (err) {
-        console.error('Error marking notifications as read:', err);
+        logger.error('Error marking notifications as read:', err);
         res.status(500).json({ error: 'Failed to update notifications' });
     }
 });

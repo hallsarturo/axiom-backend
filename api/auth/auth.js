@@ -44,7 +44,7 @@ passport.use(
                 }
                 return done(null, user);
             } catch (err) {
-                console.error('JWT strategy error:', err);
+                logger.error('JWT strategy error:', err);
                 return done(err, false);
             }
         }

@@ -126,7 +126,7 @@ router.get('/detail/:commentId', async (req, res) => {
             totalReactions,
         });
     } catch (err) {
-        console.error('/detail/:commentId error: ', err);
+        logger.error('/detail/:commentId error: ', err);
         res.status(500).json({ error: 'Could not fetch comment' });
     }
 });
@@ -325,7 +325,7 @@ router.get('/:postId/parents', async (req, res) => {
             },
         });
     } catch (err) {
-        console.error('/:postId error: ', err);
+        logger.error('/:postId error: ', err);
         res.status(500).json({ error: 'Could not fetch comments' });
     }
 });
@@ -523,7 +523,7 @@ router.get('/:postId/children/:parentCommentId', async (req, res) => {
             },
         });
     } catch (err) {
-        console.error('/:postId/children/:parentCommentId error: ', err);
+        logger.error('/:postId/children/:parentCommentId error: ', err);
         res.status(500).json({ error: 'Could not fetch child comments' });
     }
 });
@@ -664,7 +664,7 @@ router.post('/:postId', authenticate, async (req, res) => {
             .status(201)
             .json({ message: 'Comment added', comment: newComment });
     } catch (err) {
-        console.error('/:postId/:parentCommentId error: ', err);
+        logger.error('/:postId/:parentCommentId error: ', err);
         res.status(500).json({ error: 'Could not process comment' });
     }
 });
@@ -773,7 +773,7 @@ router.delete('/:commentId', authenticate, async (req, res) => {
             .status(200)
             .json({ message: 'Comment and its children removed' });
     } catch (err) {
-        console.error('/comments/:commentId error: ', err);
+        logger.error('/comments/:commentId error: ', err);
         res.status(500).json({ error: 'Could not process comment' });
     }
 });
@@ -903,14 +903,14 @@ router.put('/reaction', authenticate, async (req, res) => {
                     createdAt: notification.createdAt,
                 });
             } catch (notifError) {
-                console.error('Failed to send notification:', notifError);
+                logger.error('Failed to send notification:', notifError);
                 // Don't fail the API call if notification sending fails
             }
         }
 
         return res.status(result.status).json({ message: result.message });
     } catch (err) {
-        console.error('/comment/reaction error: ', err);
+        logger.error('/comment/reaction error: ', err);
         res.status(500).json({ error: 'Could not process comment reaction' });
     }
 });

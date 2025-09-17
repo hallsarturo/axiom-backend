@@ -70,7 +70,7 @@ router.post(
                 profileUrl: fileUrl,
             });
         } catch (err) {
-            console.error('Profile image upload error:', err);
+            logger.error('Profile image upload error:', err);
             res.status(500).json({ error: 'Upload failed' });
         }
     }
@@ -161,7 +161,7 @@ router.put('/preferences', authenticate, async (req, res) => {
 
         res.status(200).json({ message: 'Preferences updated successfully' });
     } catch (err) {
-        console.error('Error updating preferences:', err);
+        logger.error('Error updating preferences:', err);
         res.status(500).json({ error: 'Failed to update preferences' });
     }
 });
@@ -303,7 +303,7 @@ router.get('/:userId', async (req, res) => {
         }
         res.status(200).json({ success: true, user: responseUser });
     } catch (err) {
-        console.error('Public user profile error:', err);
+        logger.error('Public user profile error:', err);
         res.status(500).json({ error: 'Failed to fetch user profile' });
     }
 });
@@ -435,7 +435,7 @@ router.use('/', authenticate, async (req, res) => {
         }
         res.status(200).json({ user: responseUser });
     } catch (err) {
-        console.error('User profile error:', err);
+        logger.error('User profile error:', err);
         res.status(500).json({ error: 'Failed to fetch user profile' });
     }
 });

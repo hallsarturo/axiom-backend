@@ -92,7 +92,7 @@ router.post('/', async (req, res) => {
                         mobilePhone: existingUser.mobilePhone,
                         verified: false,
                     },
-                   process.env.JWT_SECRET,
+                    process.env.JWT_SECRET,
                     { expiresIn: '15m' }
                 );
                 res.cookie('token', provisionalToken, {
@@ -146,7 +146,7 @@ router.post('/', async (req, res) => {
                     'Verification code sent to sms. Please enter the code to complete signUp ',
             });
     } catch (err) {
-        console.error('Signup error:', err.message);
+        logger.error('Signup error:', err.message);
         res.status(400).json({ error: err.message });
     }
 });
@@ -283,7 +283,7 @@ router.post('/verify', async (req, res) => {
                     .json({ error: 'Unknown verification status.' });
         }
     } catch (err) {
-        console.error('Verify error:', err.message);
+        logger.error('Verify error:', err.message);
         res.status(400).json({ error: err.message });
     }
 });

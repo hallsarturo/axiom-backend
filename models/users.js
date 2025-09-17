@@ -123,7 +123,7 @@ export default (sequelize, DataTypes) => {
                 return user;
             }
         } catch (err) {
-            console.error('Error finding user:', err);
+            logger.error('Error finding user:', err);
             throw err;
         }
     };
@@ -136,7 +136,7 @@ export default (sequelize, DataTypes) => {
             }
             return user;
         } catch (err) {
-            console.error('Error finding user:', err);
+            logger.error('Error finding user:', err);
             throw err;
         }
     };
@@ -172,7 +172,7 @@ export default (sequelize, DataTypes) => {
                 }
             }
         } catch (err) {
-            console.error('Error validating unique fields:', err);
+            logger.error('Error validating unique fields:', err);
             throw err;
         }
     };
@@ -197,7 +197,7 @@ export default (sequelize, DataTypes) => {
                 const value = err.errors[0].value;
                 throw new Error(`The ${field} '${value}' is already in use.`);
             } else {
-                console.error('Error creating user:', err);
+                logger.error('Error creating user:', err);
                 throw new Error('An unexpected error occurred.');
             }
         }
@@ -211,7 +211,7 @@ export default (sequelize, DataTypes) => {
             await user.save();
             return user;
         } catch (err) {
-            console.error('Error updating user verification:', err);
+            logger.error('Error updating user verification:', err);
             throw err;
         }
     };
@@ -226,7 +226,7 @@ export default (sequelize, DataTypes) => {
             }
             return user;
         } catch (err) {
-            console.error('Error finding user by email:', err);
+            logger.error('Error finding user by email:', err);
             throw err;
         }
     };
