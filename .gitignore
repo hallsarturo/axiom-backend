@@ -6,3 +6,4 @@ data/
 /public/uploads/*
 log/*
 log/access.log
+quick-start-combined.log
