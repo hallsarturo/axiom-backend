@@ -11,6 +11,7 @@ import http2 from 'http2';
 import cors from 'cors';
 import passport from 'passport';
 import cookieParser from 'cookie-parser';
+import { router as healthRouter } from './api/health/health.js';
 import { router as loginRouter } from './api/auth/login.js';
 import { router as signupRouter } from './api/auth/signup.js';
 import { router as authRouter } from './api/auth/auth.js';
@@ -145,6 +146,7 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // END Middleware
 
 // ROUTES
+app.use('/api/health', healthRouter);
 app.use('/api/login', loginRouter);
 app.use('/api/signup', signupRouter);
 app.use('/api/auth', authRouter);
