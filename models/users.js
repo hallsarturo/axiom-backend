@@ -1,7 +1,6 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import logger from '../lib/winston.js';
-
 import parsePhoneNumber from 'libphonenumber-js';
 import bcrypt from 'bcrypt';
 
