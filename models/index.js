@@ -5,10 +5,11 @@ import Sequelize from 'sequelize';
 import process from 'process';
 import config from '../config/config.js';
 
+const db = {};
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const basename = path.basename(__filename);
-const env = process.env.NODE_ENV || 'production';
+const env = 'production';
 const dbConfig = config[env];
 
 if (!dbConfig) {
