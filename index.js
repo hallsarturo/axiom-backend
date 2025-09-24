@@ -51,7 +51,7 @@ app.use(function onError(err, req, res, next) {
 });
 
 // app.get('/debug-sentry', function mainHandler(req, res) {
-//     // Send a log before throwing the error
+     // Send a log before throwing the error
 //     Sentry.logger.info('User triggered test error', {
 //         action: 'test_error_endpoint',
 //     });
