@@ -59,7 +59,7 @@ app.use(function onError(err, req, res, next) {
 // });
 // end Sentry controllers
 
-const port = 4000;
+const port = 80;
 const securePort = 4010;
 const _log_dirname =
     '/Users/proal-mac/Code/AxiomLabs/Axiom/back/axiom-backend/';
@@ -238,13 +238,13 @@ httpServer.on('error', (err) => console.error(err));
 // Initialize Websocket with the HTTPS server
 const wsService = initWebsocket(httpsServer);
 
-// httpServer.listen(port, () => {
-//     console.log(`Server ready HTTP, app listening on port ${port}`);
-// });
+httpServer.listen(port, () => {
+     console.log(`Server ready HTTP, app listening on port ${port}`);
+ });
 
 // Export the WebSocket service for use in other parts of the application
 export { wsService };
 
-httpsServer.listen(securePort, () => {
-    console.log(`Server ready HTTPS, app listening on port ${securePort}`);
-});
+// httpsServer.listen(securePort, () => {
+//    console.log(`Server ready HTTPS, app listening on port ${securePort}`);
+// });
