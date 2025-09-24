@@ -38,6 +38,8 @@ import initWebsocket from './lib/websocket-server.js';
 dotenv.config();
 const app = express();
 
+logger.error('Test error log: Winston is Working!')
+
 // SENTRY controllers
 app.get('/', function rootHandler(req, res) {
     res.end('Hello world!');
