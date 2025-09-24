@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import db from '../../models/index.js';
 import authenticate from '../../lib/authenticate.js';
+import logger from '../../lib/winston.js';
 
 const router = Router();
 
@@ -96,6 +97,7 @@ router.get('/:userId', async (req, res) => {
         // console.log('Followers:', enrichedFollowers);
         // console.log('TotalFollowers:', followers.length);
     } catch (err) {
+        logger.error('Failed to fetch followers:', err);
         res.status(500).json({ error: 'Failed to fetch followers' });
     }
 });
@@ -172,6 +174,7 @@ router.put('/:targetUserId', authenticate, async (req, res) => {
             return res.status(201).json({ message: 'Followed user.' });
         }
     } catch (err) {
+        logger.error('Failed to follow/unfollow user:', err);
         res.status(500).json({ error: 'Failed to follow/unfollow user' });
     }
 });

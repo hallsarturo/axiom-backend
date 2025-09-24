@@ -1198,10 +1198,16 @@ router.delete('/:postId', authenticate, async (req, res) => {
         const post = await db.posts.findByPk(postId);
 
         if (!post) {
+            logger.error(
+                `Post not found for delete: postId=${postId}, userId=${userId}`
+            );
             return res.status(404).json({ error: 'Post not found' });
         }
 
         if (post.userId !== userId) {
+            logger.error(
+                `Unauthorized delete attempt: postId=${postId}, userId=${userId}`
+            );
             return res
                 .status(403)
                 .json({ error: 'You are not authorized to delete this post' });

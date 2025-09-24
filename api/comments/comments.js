@@ -3,6 +3,7 @@ import db from '../../models/index.js';
 import jwt from 'jsonwebtoken';
 import authenticate from '../../lib/authenticate.js';
 import { wsService } from '../../index.js';
+import logger from '../../lib/winston.js';
 
 const router = Router();
 
