@@ -115,6 +115,7 @@ function requireHTTPS(req, res, next) {
     }
     res.status(403).send('HTTPS Required');
 }
+app.set('trust proxy', 1);
 app.use(requireHTTPS);
 // CORS
 app.use(
