@@ -59,7 +59,7 @@ app.use(function onError(err, req, res, next) {
 // });
 // end Sentry controllers
 
-const port = 80;
+const port = 4000;
 const securePort = 4010;
 const _log_dirname =
     '/Users/proal-mac/Code/AxiomLabs/Axiom/back/axiom-backend/';
