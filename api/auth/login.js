@@ -2,6 +2,7 @@ import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import db from '../../models/index.js';
+import logger from '../../lib/winston.js';
 
 const router = Router();
 
