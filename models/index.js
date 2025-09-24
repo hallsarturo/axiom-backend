@@ -8,10 +8,14 @@ import config from '../config/config.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const basename = path.basename(__filename);
-const env = process.env.NODE_ENV || 'development';
+const env = process.env.NODE_ENV || 'production';
 const dbConfig = config[env];
-const db = {};
 
+if (!dbConfig) {
+    throw new Error(`Database config for environment "${env}" not found.`);
+}
+
+// Use dbConfig.use_env_variable only if it exists
 let sequelize;
 if (dbConfig.use_env_variable) {
     sequelize = new Sequelize(process.env[dbConfig.use_env_variable], dbConfig);
