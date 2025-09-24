@@ -245,6 +245,6 @@ httpServer.listen(port, '0.0.0.0', () => {
 // Export the WebSocket service for use in other parts of the application
 export { wsService };
 
-// httpsServer.listen(securePort, () => {
-//    console.log(`Server ready HTTPS, app listening on port ${securePort}`);
-// });
+ httpsServer.listen(securePort, '0.0.0.0', () => {
+    console.log(`Server ready HTTPS, app listening on port ${securePort}`);
+ });
