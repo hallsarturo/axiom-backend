@@ -99,8 +99,9 @@ router.post('/', async (req, res) => {
                         httpOnly: true,
                         secure: true,
                         sameSite: 'none',
+                        domain: process.env.DOMAIN,
                         path: '/',
-                        maxAge: 60 * 60 * 1000, // 1 hour
+                        maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
                     })
                         .status(200)
                         .json({
