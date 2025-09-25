@@ -94,6 +94,7 @@ router.post('/', async (req, res) => {
                     process.env.JWT_SECRET,
                     { expiresIn: '30d' }
                 );
+                logger.log('info', 'token generated: ', token);
                 if (process.env.NODE_ENV === 'production') {
                     res.cookie('token', token, {
                         httpOnly: true,
@@ -101,7 +102,7 @@ router.post('/', async (req, res) => {
                         sameSite: 'none',
                         domain: process.env.DOMAIN,
                         path: '/',
-                        maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+                        maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
                     })
                         .status(200)
                         .json({
