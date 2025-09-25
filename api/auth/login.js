@@ -96,28 +96,16 @@ router.post('/', async (req, res) => {
                 );
                 logger.log('info', 'token generated: ', token);
                 if (process.env.NODE_ENV === 'production') {
-                    res.cookie('token', token, {
-                        httpOnly: true,
-                        secure: true,
-                        sameSite: 'none',
-                        domain: process.env.DOMAIN,
-                        path: '/',
-                        maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-                    })
-                        .status(200)
-                        .json({
-                            user: {
-                                id: user.id,
-                                username: user.username,
-                                email: user.email,
-                                mobilePhone: user.mobilePhone,
-                                isVerified: user.isVerified,
-                            },
-                            message: 'Login successful',
-                        });
-                } else {
-                    res.status(200).json({
-                        token,
+                res.cookie('token', token, {
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: 'none',
+                    domain: 'social.axiomlab.space',
+                    path: '/',
+                    maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+                })
+                    .status(200)
+                    .json({
                         user: {
                             id: user.id,
                             username: user.username,
@@ -127,6 +115,18 @@ router.post('/', async (req, res) => {
                         },
                         message: 'Login successful',
                     });
+                } else {
+                res.status(200).json({
+                    token,
+                    user: {
+                        id: user.id,
+                        username: user.username,
+                        email: user.email,
+                        mobilePhone: user.mobilePhone,
+                        isVerified: user.isVerified,
+                    },
+                    message: 'Login successful',
+                });
                 }
             } else {
                 return res.status(401).json({
