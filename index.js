@@ -132,19 +132,19 @@ app.use(
 app.use(cookieParser());
 
 //Express-session
-app.use(
-    session({
-        secret: process.env.SESSION_SECRET,
-        resave: false,
-        saveUninitialized: true,
-        cookie: {
-            secure: true,
-            maxAge: 15 * 60 * 1000,
-            sameSite: 'none',
-            httpOnly: true,
-        },
-    })
-);
+// app.use(
+//     session({
+//         secret: process.env.SESSION_SECRET,
+//         resave: false,
+//         saveUninitialized: true,
+//         cookie: {
+//             secure: true,
+//             maxAge: 15 * 60 * 1000,
+//             sameSite: 'none',
+//             httpOnly: true,
+//         },
+//     })
+// );
 
 app.use(passport.initialize());
 // Serialize user to session (store user id)
@@ -183,19 +183,26 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Debuging login (remove)
 // Add to your backend Express app
 app.get('/api/verify-auth', (req, res) => {
-    // Check if user is authenticated (has valid session)
-    if (req.session && req.session.userId) {
-        return res.status(200).json({
-            authenticated: true,
-            user: req.session.user || { id: req.session.userId },
-        });
-    }
-
-    // Not authenticated
+  let token = req.cookies.token;
+  if (!token) {
     return res.status(401).json({
-        authenticated: false,
-        message: 'Not authenticated',
+      authenticated: false,
+      message: 'Not authenticated'
     });
+  }
+  
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    return res.status(200).json({
+      authenticated: true,
+      user: { id: payload.id, username: payload.username }
+    });
+  } catch (err) {
+    return res.status(401).json({
+      authenticated: false,
+      message: 'Invalid token'
+    });
+  }
 });
 
 app.use('/api/health', healthRouter);

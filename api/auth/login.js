@@ -100,7 +100,7 @@ router.post('/', async (req, res) => {
                     httpOnly: true,
                     secure: true,
                     sameSite: 'none',
-                    domain: 'social.axiomlab.space',
+                    domain: '.axiomlab.space',
                     path: '/',
                     maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
                 })
