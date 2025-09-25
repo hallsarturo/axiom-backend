@@ -180,6 +180,24 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // END Middleware
 
 // ROUTES
+// Debuging login (remove)
+// Add to your backend Express app
+app.get('/api/verify-auth', (req, res) => {
+    // Check if user is authenticated (has valid session)
+    if (req.session && req.session.userId) {
+        return res.status(200).json({
+            authenticated: true,
+            user: req.session.user || { id: req.session.userId },
+        });
+    }
+
+    // Not authenticated
+    return res.status(401).json({
+        authenticated: false,
+        message: 'Not authenticated',
+    });
+});
+
 app.use('/api/health', healthRouter);
 app.use('/api/login', loginRouter);
 app.use('/api/signup', signupRouter);
