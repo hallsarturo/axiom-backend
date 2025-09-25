@@ -53,7 +53,7 @@ app.use(function onError(err, req, res, next) {
 });
 
 // app.get('/debug-sentry', function mainHandler(req, res) {
-     // Send a log before throwing the error
+// Send a log before throwing the error
 //     Sentry.logger.info('User triggered test error', {
 //         action: 'test_error_endpoint',
 //     });
@@ -128,6 +128,9 @@ app.use(
         allowedHeaders: ['Content-Type', 'Authorization'],
     })
 );
+// cookie Parser
+app.use(cookieParser());
+
 //Express-session
 app.use(
     session({
@@ -142,8 +145,6 @@ app.use(
         },
     })
 );
-// cookie Parser
-app.use(cookieParser());
 
 app.use(passport.initialize());
 // Serialize user to session (store user id)
@@ -242,12 +243,12 @@ httpServer.on('error', (err) => console.error(err));
 const wsService = initWebsocket(httpsServer);
 
 httpServer.listen(port, '0.0.0.0', () => {
-     console.log(`Server ready HTTP, app listening on port ${port}`);
- });
+    console.log(`Server ready HTTP, app listening on port ${port}`);
+});
 
 // Export the WebSocket service for use in other parts of the application
 export { wsService };
 
- httpsServer.listen(securePort, '0.0.0.0', () => {
+httpsServer.listen(securePort, '0.0.0.0', () => {
     console.log(`Server ready HTTPS, app listening on port ${securePort}`);
- });
+});
