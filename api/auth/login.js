@@ -95,7 +95,6 @@ router.post('/', async (req, res) => {
                     { expiresIn: '30d' }
                 );
                 logger.log('info', 'token generated: ', token);
-                if (process.env.NODE_ENV === 'production') {
                 res.cookie('token', token, {
                     httpOnly: true,
                     secure: true,
@@ -115,19 +114,6 @@ router.post('/', async (req, res) => {
                         },
                         message: 'Login successful',
                     });
-                } else {
-                res.status(200).json({
-                    token,
-                    user: {
-                        id: user.id,
-                        username: user.username,
-                        email: user.email,
-                        mobilePhone: user.mobilePhone,
-                        isVerified: user.isVerified,
-                    },
-                    message: 'Login successful',
-                });
-                }
             } else {
                 return res.status(401).json({
                     message:
