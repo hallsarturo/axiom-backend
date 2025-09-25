@@ -183,26 +183,26 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Debuging login (remove)
 // Add to your backend Express app
 app.get('/api/verify-auth', (req, res) => {
-  let token = req.cookies.token;
-  if (!token) {
-    return res.status(401).json({
-      authenticated: false,
-      message: 'Not authenticated'
-    });
-  }
-  
-  try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    return res.status(200).json({
-      authenticated: true,
-      user: { id: payload.id, username: payload.username }
-    });
-  } catch (err) {
-    return res.status(401).json({
-      authenticated: false,
-      message: 'Invalid token'
-    });
-  }
+    let token = req.cookies.token;
+    if (!token) {
+        return res.status(401).json({
+            authenticated: false,
+            message: 'Not authenticated',
+        });
+    }
+
+    try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        return res.status(200).json({
+            authenticated: true,
+            user: { id: payload.id, username: payload.username },
+        });
+    } catch (err) {
+        return res.status(401).json({
+            authenticated: false,
+            message: 'Invalid token',
+        });
+    }
 });
 
 app.use('/api/health', healthRouter);
@@ -252,11 +252,22 @@ app.post('/api/logout', function (req, res, next) {
 //
 
 // Load SSL Certificates
-const options = {
-    key: fs.readFileSync('./certificates/localhost-key.pem'),
-    cert: fs.readFileSync('./certificates/localhost.pem'),
-    allowHTTP1: true,
-};
+const options =
+    process.env.NODE_ENV === 'production'
+        ? {
+              key: fs.readFileSync(
+                  '/etc/letsencrypt/live/api.axiomlab.space/privkey.pem'
+              ),
+              cert: fs.readFileSync(
+                  '/etc/letsencrypt/live/api.axiomlab.space/fullchain.pem'
+              ),
+              allowHTTP1: true,
+          }
+        : {
+              key: fs.readFileSync('./certificates/localhost-key.pem'),
+              cert: fs.readFileSync('./certificates/localhost.pem'),
+              allowHTTP1: true,
+          };
 //
 
 // Create HTTP/ server
