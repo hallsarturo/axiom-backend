@@ -132,6 +132,20 @@ app.use(
 // cookie Parser
 app.use(cookieParser());
 
+// Express-session
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        saveUninitialized: true,
+        cookie: {
+            secure: true,
+            sameSite: 'none',
+            maxAge: 24 * 60 * 60 * 1000, // 1 day
+            domain: '.axiomlab.space',
+        },
+    })
+);
 
 app.use(passport.initialize());
 // Serialize user to session (store user id)
@@ -149,7 +163,7 @@ passport.deserializeUser(async (id, done) => {
     }
 });
 
-//app.use(passport.session());
+app.use(passport.session());
 
 // PASSPORT-JWT
 let opts = {};
@@ -166,16 +180,22 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Add this headers middleware before your routes
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL);
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  next();
+    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header(
+        'Access-Control-Allow-Headers',
+        'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+    );
+    res.header(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PUT, DELETE, OPTIONS'
+    );
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
 });
 
 // END Middleware
