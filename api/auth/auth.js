@@ -21,22 +21,18 @@ opts.secretOrKey = process.env.JWT_SECRET;
 passport.use(
     new JwtStrategy(
         {
-            jwtFromRequest: ExtractJwt.fromExtractors([
-                ExtractJwt.fromAuthHeaderAsBearerToken(),
-                (req) => {
-                    let token = null;
-                    if (req && req.cookies) {
-                        token = req.cookies['token'];
-                    }
-                    return token;
-                },
-            ]),
+            jwtFromRequest: (req) => {
+                console.log('Cookies:', req.cookies);
+                const token = req.cookies?.token || null;
+                console.log('Extracted token:', token ? 'Present' : 'Missing');
+                return token;
+            },
             secretOrKey: process.env.JWT_SECRET,
         },
         async (jwtPayload, done) => {
-            // Your verification logic
             try {
-                // console.log('JWT payload:', jwtPayload); // Debug
+                console.log('JWT payload:', jwtPayload);
+                // Your verification logic
                 const user = await db.users.findUserById({ id: jwtPayload.id });
                 if (!user) {
                     console.log('No user found for id:', jwtPayload.id); // Debug
@@ -44,7 +40,7 @@ passport.use(
                 }
                 return done(null, user);
             } catch (err) {
-                logger.error('JWT strategy error:', err);
+                console.error('JWT verification error:', err);
                 return done(err, false);
             }
         }

@@ -201,30 +201,31 @@ app.use((req, res, next) => {
 // END Middleware
 
 // ROUTES
+
 // Debuging login (remove)
 // Add to your backend Express app
-app.get('/api/verify-auth', (req, res) => {
-    let token = req.cookies.token;
-    if (!token) {
-        return res.status(401).json({
-            authenticated: false,
-            message: 'Not authenticated',
-        });
-    }
+// app.get('/api/verify-auth', (req, res) => {
+//     let token = req.cookies.token;
+//     if (!token) {
+//         return res.status(401).json({
+//             authenticated: false,
+//             message: 'Not authenticated',
+//         });
+//     }
 
-    try {
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
-        return res.status(200).json({
-            authenticated: true,
-            user: { id: payload.id, username: payload.username },
-        });
-    } catch (err) {
-        return res.status(401).json({
-            authenticated: false,
-            message: 'Invalid token',
-        });
-    }
-});
+//     try {
+//         const payload = jwt.verify(token, process.env.JWT_SECRET);
+//         return res.status(200).json({
+//             authenticated: true,
+//             user: { id: payload.id, username: payload.username },
+//         });
+//     } catch (err) {
+//         return res.status(401).json({
+//             authenticated: false,
+//             message: 'Invalid token',
+//         });
+//     }
+// });
 
 app.use('/api/health', healthRouter);
 app.use('/api/logout', logoutRouter);
