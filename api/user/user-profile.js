@@ -5,6 +5,7 @@ import { uploadProfileImage } from '../../lib/upload.js';
 import authenticate from '../../lib/authenticate.js';
 import path from 'path';
 import fs from 'fs';
+import logger from '../../lib/winston.js';
 
 const router = Router();
 
