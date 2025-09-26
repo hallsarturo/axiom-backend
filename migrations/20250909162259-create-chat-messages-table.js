@@ -66,7 +66,7 @@ export async function up(queryInterface, Sequelize) {
             }
         );
     } catch (error) {
-        logger.log('Some indices may already exist:', error.message);
+        logger.info('Some indices may already exist:', error.message);
     }
 }
 

@@ -95,11 +95,11 @@ router.get('/:userId', async (req, res) => {
             following: enrichedFollowing,
             totalFollowings: following.length,
         });
-        // logger.log(
+        // logger.info(
         //     'Following:',
         //     following.map((f) => f.following)
         // );
-        // logger.log('TotalFollowings:', following.length);
+        // logger.info('TotalFollowings:', following.length);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch following' });
     }

@@ -94,8 +94,8 @@ router.get('/:userId', async (req, res) => {
             followers: enrichedFollowers,
             totalFollowers: followers.length,
         });
-        // logger.log('Followers:', enrichedFollowers);
-        // logger.log('TotalFollowers:', followers.length);
+        // logger.info('Followers:', enrichedFollowers);
+        // logger.info('TotalFollowers:', followers.length);
     } catch (err) {
         logger.error('Failed to fetch followers:', err);
         res.status(500).json({ error: 'Failed to fetch followers' });

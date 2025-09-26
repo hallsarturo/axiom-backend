@@ -94,7 +94,7 @@ router.post('/', async (req, res) => {
                     process.env.JWT_SECRET,
                     { expiresIn: '30d' }
                 );
-                logger.log('info', 'token generated: ', token);
+                logger.info('info', 'token generated: ', token);
                 res.cookie('token', token, {
                     httpOnly: true,
                     secure: true,

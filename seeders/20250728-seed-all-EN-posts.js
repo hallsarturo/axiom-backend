@@ -14,7 +14,7 @@ export async function up(queryInterface) {
     let processedCount = 0;
     let successCount = 0;
 
-    logger.log(`Processing ${records.length} records...`);
+    logger.info(`Processing ${records.length} records...`);
 
     // Add this function at the top with your other helpers
     function sanitizeString(str) {
@@ -87,7 +87,7 @@ export async function up(queryInterface) {
             await queryInterface.bulkInsert('posts', [testPost], {
                 validate: false,
             });
-            logger.log('✅ Test insert succeeded!');
+            logger.info('✅ Test insert succeeded!');
             // If this works, the issue is with your data, not the table structure
         } catch (error) {
             logger.error('❌ Test insert failed:', error.message);
@@ -113,7 +113,7 @@ export async function up(queryInterface) {
         }
     });
 
-    logger.log(
+    logger.info(
         `Found ${existingIdentifiers.size} existing records. Will skip these.`
     );
 
@@ -124,7 +124,7 @@ export async function up(queryInterface) {
 
             // Skip existing identifiers
             if (existingIdentifiers.has(identifier)) {
-                logger.log(`Skipping existing record: ${identifier}`);
+                logger.info(`Skipping existing record: ${identifier}`);
                 continue;
             }
 
@@ -179,7 +179,7 @@ export async function up(queryInterface) {
                         validate: false,
                     });
                     successCount += batch.length;
-                    logger.log(
+                    logger.info(
                         `✅ Inserted ${batch.length} records. Total successful: ${successCount}/${processedCount}`
                     );
                 } catch (batchError) {

@@ -470,7 +470,7 @@ router.get('/userposts', async (req, res) => {
                 };
             })
         );
-        // logger.log('userPosts response:', postsWithStats); // Debug output
+        // logger.info('userPosts response:', postsWithStats); // Debug output
 
         res.status(200).json({
             userPosts: postsWithStats,
@@ -1194,7 +1194,7 @@ router.delete('/:postId', authenticate, async (req, res) => {
     } else {
         userId = req.userId;
     }
-    logger.log('\n\nuser id: ', userId, 'post id: ', postId, '\n\n');
+    logger.info('\n\nuser id: ', userId, 'post id: ', postId, '\n\n');
     try {
         const post = await db.posts.findByPk(postId);
 
@@ -1289,10 +1289,10 @@ router.get('/bookmarks-personal/:userId', async (req, res) => {
             where: { userId },
             attributes: ['postId'],
         });
-        //logger.log('\n\n/bookmarks/:userId: BOOKMARKS', bookmarks); // Log bookmarks, not posts
+        //logger.info('\n\n/bookmarks/:userId: BOOKMARKS', bookmarks); // Log bookmarks, not posts
 
         const postIds = bookmarks.map((b) => b.postId);
-        //logger.log('\n\n/bookmarks/:userId: POSTID', postIds); // Log postIds, not posts
+        //logger.info('\n\n/bookmarks/:userId: POSTID', postIds); // Log postIds, not posts
 
         const posts = await db.posts.findAll({
             where: { id: postIds },
@@ -1309,7 +1309,7 @@ router.get('/bookmarks-personal/:userId', async (req, res) => {
             order: [['createdAt', 'DESC']],
         });
 
-        //logger.log('\n\n/bookmarks/:userId: POSTS', posts);
+        //logger.info('\n\n/bookmarks/:userId: POSTS', posts);
         res.status(200).json({ posts, total: posts.length });
     } catch (err) {
         logger.error('/bookmarks/:userId error:', err);

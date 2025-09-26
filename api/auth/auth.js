@@ -23,20 +23,20 @@ passport.use(
     new JwtStrategy(
         {
             jwtFromRequest: (req) => {
-                logger.log('Cookies:', req.cookies);
+                logger.info('Cookies:', req.cookies);
                 const token = req.cookies?.token || null;
-                logger.log('Extracted token:', token ? 'Present' : 'Missing');
+                logger.info('Extracted token:', token ? 'Present' : 'Missing');
                 return token;
             },
             secretOrKey: process.env.JWT_SECRET,
         },
         async (jwtPayload, done) => {
             try {
-                logger.log('JWT payload:', jwtPayload);
+                logger.info('JWT payload:', jwtPayload);
                 // Your verification logic
                 const user = await db.users.findUserById({ id: jwtPayload.id });
                 if (!user) {
-                    logger.log('No user found for id:', jwtPayload.id); // Debug
+                    logger.info('No user found for id:', jwtPayload.id); // Debug
                     return done(null, false);
                 }
                 return done(null, user);
@@ -126,7 +126,7 @@ passport.use(
                     photoUrl: profile.photos?.[0]?.value,
                 };
                 await db.auth_providers.upsertAuthProvider(providerData);
-                logger.log('Created new user from Google profile');
+                logger.info('Created new user from Google profile');
 
                 done(null, user);
             } catch (err) {
