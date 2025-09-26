@@ -389,6 +389,14 @@ router.get('/userposts', async (req, res) => {
                 'commentsCount',
                 'sharesCount',
             ],
+            include: [
+                {
+                    model: db.users,
+                    as: 'user',
+                    attributes: ['id', 'username', 'userProfilePic'],
+                    required: false,
+                },
+            ],
             where: { type: 'user' },
             order: [['createdAt', 'DESC']],
             limit: pageSize,
@@ -417,8 +425,8 @@ router.get('/userposts', async (req, res) => {
                     ...postData
                 } = post.toJSON();
 
-                // Get user (author's) profile pic from posts userId
-                const profilePic = await getUserProfilePic(authorId);
+                // Use the user data from the eager-loaded relation
+                const profilePic = post.user ? post.user.userProfilePic : null;
 
                 // Use counts directly from the post record
                 const likes = post.likesCount || 0;
@@ -454,7 +462,7 @@ router.get('/userposts', async (req, res) => {
                 return {
                     postId,
                     ...postData,
-                    userId: authorId, // Keep using userId for consistency
+                    userId: authorId, 
                     imgSrc: image ? image : null,
                     authorProfilePic: profilePic,
                     totalReactions,
