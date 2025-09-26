@@ -280,6 +280,7 @@ httpServer.on('error', (err) => console.error(err));
 
 // Initialize Websocket with the HTTPS server
 const wsService = initWebsocket(httpsServer);
+logger.info('WebSocket service initialized:', !!wsService);
 
 httpServer.listen(port, '0.0.0.0', () => {
     console.log(`Server ready HTTP, app listening on port ${port}`);
