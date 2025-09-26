@@ -157,38 +157,56 @@ passport.use(
 // redirect
 router.get(
     '/google/callback',
-    passport.authenticate('google', {
-        failureRedirect: `${process.env.FRONTEND_URL}/`,
-    }),
+    (req, res, next) => {
+        passport.authenticate('google', {
+            failureRedirect: `${process.env.FRONTEND_URL}/`,
+        })(req, res, next);
+    },
     async function (req, res) {
-        // Update isVerified to true
-        await db.users.setVerified(req.user.id);
+        try {
+            // Make sure req.user exists
+            if (!req.user || !req.user.id) {
+                console.error('Missing user in Google callback');
+                return res.redirect(
+                    `${process.env.FRONTEND_URL}/login?error=authentication_failed`
+                );
+            }
 
-        // create JWT
-        const token = jwt.sign(
-            {
-                id: req.user.id,
-                username: req.user.username,
-                isVerified: true,
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: '30d' }
-        );
+            // Update isVerified to true
+            await db.users.setVerified(req.user.id);
 
-        if (process.env.NODE_ENV === 'production') {
-            // Set JWT as httpOnly cookie and redirect
-            res.cookie('token', token, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'none',
-                domain: '.axiomlab.space',
-                path: '/',
-                maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-            }).redirect(`${process.env.FRONTEND_URL}/auth/success`);
-        } else {
-            // Send JWT in response body for localStorage save in dev
-            res.redirect(
-                `${process.env.FRONTEND_URL}/auth/success?token=${token}`
+            // create JWT
+            const token = jwt.sign(
+                {
+                    id: req.user.id,
+                    username: req.user.username,
+                    isVerified: true,
+                },
+                process.env.JWT_SECRET,
+                { expiresIn: '30d' }
+            );
+
+            if (process.env.NODE_ENV === 'production') {
+                // Set JWT as httpOnly cookie and redirect
+                res.cookie('token', token, {
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: 'none',
+                    domain: '.axiomlab.space',
+                    path: '/',
+                    maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+                });
+                return res.redirect(`${process.env.FRONTEND_URL}/auth/success`);
+            } else {
+                // Send JWT in response body for localStorage save in dev
+                return res.redirect(
+                    `${process.env.FRONTEND_URL}/auth/success?token=${token}`
+                );
+            }
+        } catch (error) {
+            console.error('Error in Google callback:', error);
+            return res.redirect(
+                `${process.env.FRONTEND_URL}/login?error=server_error`
             );
         }
     }
