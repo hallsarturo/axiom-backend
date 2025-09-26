@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import logger from '../../lib/winston.js';
+import logger from '../lib/winston.js';
 
 export async function up(queryInterface) {
     const filePath = path.resolve('data/phil-papers/en-records.json');
