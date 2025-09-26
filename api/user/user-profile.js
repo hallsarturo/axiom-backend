@@ -124,9 +124,9 @@ router.post(
 router.put('/preferences', authenticate, async (req, res) => {
     try {
         // Get data from request body
-        logger.log('req.body: ', req.body);
+        logger.info('req.body: ', req.body);
         const { about, degreeLevel, categories } = req.body;
-        logger.log('categories: ', categories);
+        logger.info('categories: ', categories);
         // Update 'about' in users table
         await db.users.update({ about }, { where: { id: req.userId } });
 
