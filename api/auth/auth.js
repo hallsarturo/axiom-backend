@@ -181,7 +181,9 @@ router.get(
                 httpOnly: true,
                 secure: true,
                 sameSite: 'none',
-                maxAge: 10 * 60 * 60 * 1000, // 10 hours
+                domain: '.axiomlab.space',
+                path: '/',
+                maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
             }).redirect(`${process.env.FRONTEND_URL}/auth/success`);
         } else {
             // Send JWT in response body for localStorage save in dev
