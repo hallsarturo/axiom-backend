@@ -14,6 +14,7 @@ import http2 from 'http2';
 import cors from 'cors';
 import passport from 'passport';
 import cookieParser from 'cookie-parser';
+import db from './models/index.js';
 import { router as healthRouter } from './api/health/health.js';
 import { router as logoutRouter } from './api/auth/logout.js';
 import { router as loginRouter } from './api/auth/login.js';
@@ -146,8 +147,6 @@ app.use(
         },
     })
 );
-
-app.use(passport.initialize());
 // Serialize user to session (store user id)
 passport.serializeUser((user, done) => {
     done(null, user.id);
@@ -163,14 +162,15 @@ passport.deserializeUser(async (id, done) => {
     }
 });
 
+app.use(passport.initialize());
 app.use(passport.session());
 
 // PASSPORT-JWT
 let opts = {};
 opts.jwtFromRequest = (req) => req?.cookies?.token || null; // Extract token from cookie
 opts.secretOrKey = process.env.JWT_SECRET;
-// opts.issuer = 'accoaccounts.examplesoft.com';
-// opts.audience = 'yoursite.net';
+opts.issuer = 'api.axiomlab.space';
+opts.audience = 'axiomlab.space';
 
 // helmet
 app.use(helmet());

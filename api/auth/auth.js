@@ -16,8 +16,8 @@ const router = Router();
 let opts = {};
 opts.jwtFromRequest = (req) => req?.cookies?.token || null; // Extract token from cookie
 opts.secretOrKey = process.env.JWT_SECRET;
-// opts.issuer = 'accoaccounts.examplesoft.com';
-// opts.audience = 'yoursite.net';
+opts.issuer = 'api.axiomlab.space';
+opts.audience = 'axiomlab.space';
 
 passport.use(
     new JwtStrategy(
