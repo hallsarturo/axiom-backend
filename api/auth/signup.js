@@ -7,6 +7,7 @@ import bcrypt from 'bcrypt';
 import db from '../../models/index.js';
 import rateLimit from 'express-rate-limit';
 import { createVerification, verificationCheck } from '../../lib/twilio.js';
+import logger from '../../lib/winston.js';
 
 const router = Router();
 
@@ -60,7 +61,7 @@ router.post('/', async (req, res) => {
     try {
         const userData = req.body;
         const mobilePhone = userData.mobilePhone;
-        // console.log('userData: ', userData);
+        // logger.log('userData: ', userData);
 
         // Check if user already exists
         const existingUser = await db.users.findOne({
@@ -116,7 +117,7 @@ router.post('/', async (req, res) => {
 
         // If no user, create new user delete LOG in PRO
         const newUser = await db.users.createUser(userData);
-        console.log('new user created in users: ', newUser);
+        logger.log('new user created in users: ', newUser);
 
         // Save Data to token
         // create JWT
@@ -132,7 +133,7 @@ router.post('/', async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: '15m' }
         );
-        // console.log('created token: ', provisionalToken);
+        // logger.log('created token: ', provisionalToken);
         res.cookie('token', provisionalToken, {
             httpOnly: true,
             secure: true,
@@ -177,7 +178,7 @@ router.post('/', async (req, res) => {
 
 router.post('/verify', async (req, res) => {
     try {
-        // console.log('Entered to /verify call');
+        // logger.log('Entered to /verify call');
 
         // Try to get token from Authorization header OR cookie
 
@@ -205,7 +206,7 @@ router.post('/verify', async (req, res) => {
                 .json({ error: 'No signup data found in token.' });
         }
 
-        // console.log('Data: ', userData, ' otpCode: ', otpCode);
+        // logger.log('Data: ', userData, ' otpCode: ', otpCode);
 
         const user = await db.users.findUserById(userData);
         if (!user) {

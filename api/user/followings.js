@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import db from '../../models/index.js';
 import authenticate from '../../lib/authenticate.js';
+import logger from '../../lib/winston.js';
 
 const router = Router();
 
@@ -94,11 +95,11 @@ router.get('/:userId', async (req, res) => {
             following: enrichedFollowing,
             totalFollowings: following.length,
         });
-        // console.log(
+        // logger.log(
         //     'Following:',
         //     following.map((f) => f.following)
         // );
-        // console.log('TotalFollowings:', following.length);
+        // logger.log('TotalFollowings:', following.length);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch following' });
     }

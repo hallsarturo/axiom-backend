@@ -6,6 +6,7 @@ import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as OrcidStrategy } from 'passport-orcid';
 import db from '../../models/index.js';
+import logger from '../../lib/winston.js';
 
 dotenv.config();
 
@@ -22,25 +23,25 @@ passport.use(
     new JwtStrategy(
         {
             jwtFromRequest: (req) => {
-                console.log('Cookies:', req.cookies);
+                logger.log('Cookies:', req.cookies);
                 const token = req.cookies?.token || null;
-                console.log('Extracted token:', token ? 'Present' : 'Missing');
+                logger.log('Extracted token:', token ? 'Present' : 'Missing');
                 return token;
             },
             secretOrKey: process.env.JWT_SECRET,
         },
         async (jwtPayload, done) => {
             try {
-                console.log('JWT payload:', jwtPayload);
+                logger.log('JWT payload:', jwtPayload);
                 // Your verification logic
                 const user = await db.users.findUserById({ id: jwtPayload.id });
                 if (!user) {
-                    console.log('No user found for id:', jwtPayload.id); // Debug
+                    logger.log('No user found for id:', jwtPayload.id); // Debug
                     return done(null, false);
                 }
                 return done(null, user);
             } catch (err) {
-                console.error('JWT verification error:', err);
+                logger.error('JWT verification error:', err);
                 return done(err, false);
             }
         }
@@ -125,7 +126,7 @@ passport.use(
                     photoUrl: profile.photos?.[0]?.value,
                 };
                 await db.auth_providers.upsertAuthProvider(providerData);
-                console.log('Created new user from Google profile');
+                logger.log('Created new user from Google profile');
 
                 done(null, user);
             } catch (err) {
@@ -162,7 +163,7 @@ router.get(
         try {
             // Make sure req.user exists
             if (!req.user || !req.user.id) {
-                console.error('Missing user in Google callback');
+                logger.error('Missing user in Google callback');
                 return res.redirect(
                     `${process.env.FRONTEND_URL}/login?error=authentication_failed`
                 );
@@ -200,7 +201,7 @@ router.get(
                 );
             }
         } catch (error) {
-            console.error('Error in Google callback:', error);
+            logger.error('Error in Google callback:', error);
             return res.redirect(
                 `${process.env.FRONTEND_URL}/login?error=server_error`
             );

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import db from '../../models/index.js';
 import authenticate from '../../lib/authenticate.js';
+import logger from '../../lib/winston.js';
 
 const router = Router();
 

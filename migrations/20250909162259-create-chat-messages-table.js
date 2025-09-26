@@ -1,4 +1,5 @@
 import { QueryInterface, DataTypes } from 'sequelize';
+import logger from '../../lib/winston.js';
 
 export async function up(queryInterface, Sequelize) {
     await queryInterface.createTable('chat_messages', {
@@ -65,7 +66,7 @@ export async function up(queryInterface, Sequelize) {
             }
         );
     } catch (error) {
-        console.log('Some indices may already exist:', error.message);
+        logger.log('Some indices may already exist:', error.message);
     }
 }
 

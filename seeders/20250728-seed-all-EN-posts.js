@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import logger from '../../lib/winston.js';
 
 export async function up(queryInterface) {
     const filePath = path.resolve('data/phil-papers/en-records.json');
@@ -13,7 +14,7 @@ export async function up(queryInterface) {
     let processedCount = 0;
     let successCount = 0;
 
-    console.log(`Processing ${records.length} records...`);
+    logger.log(`Processing ${records.length} records...`);
 
     // Add this function at the top with your other helpers
     function sanitizeString(str) {
@@ -86,10 +87,10 @@ export async function up(queryInterface) {
             await queryInterface.bulkInsert('posts', [testPost], {
                 validate: false,
             });
-            console.log('✅ Test insert succeeded!');
+            logger.log('✅ Test insert succeeded!');
             // If this works, the issue is with your data, not the table structure
         } catch (error) {
-            console.error('❌ Test insert failed:', error.message);
+            logger.error('❌ Test insert failed:', error.message);
             // If this fails, there might be a table structure issue
         }
     }
@@ -112,7 +113,7 @@ export async function up(queryInterface) {
         }
     });
 
-    console.log(
+    logger.log(
         `Found ${existingIdentifiers.size} existing records. Will skip these.`
     );
 
@@ -123,7 +124,7 @@ export async function up(queryInterface) {
 
             // Skip existing identifiers
             if (existingIdentifiers.has(identifier)) {
-                console.log(`Skipping existing record: ${identifier}`);
+                logger.log(`Skipping existing record: ${identifier}`);
                 continue;
             }
 
@@ -178,7 +179,7 @@ export async function up(queryInterface) {
                         validate: false,
                     });
                     successCount += batch.length;
-                    console.log(
+                    logger.log(
                         `✅ Inserted ${batch.length} records. Total successful: ${successCount}/${processedCount}`
                     );
                 } catch (batchError) {

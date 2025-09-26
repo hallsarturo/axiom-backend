@@ -7,6 +7,7 @@ import { getUserProfilePic } from '../../lib/user-utils.js';
 import path from 'path';
 import fs from 'fs';
 import { wsService } from '../../index.js';
+import logger from '../../lib/winston.js';
 
 const router = Router();
 
@@ -469,7 +470,7 @@ router.get('/userposts', async (req, res) => {
                 };
             })
         );
-        // console.log('userPosts response:', postsWithStats); // Debug output
+        // logger.log('userPosts response:', postsWithStats); // Debug output
 
         res.status(200).json({
             userPosts: postsWithStats,
@@ -1193,7 +1194,7 @@ router.delete('/:postId', authenticate, async (req, res) => {
     } else {
         userId = req.userId;
     }
-    console.log('\n\nuser id: ', userId, 'post id: ', postId, '\n\n');
+    logger.log('\n\nuser id: ', userId, 'post id: ', postId, '\n\n');
     try {
         const post = await db.posts.findByPk(postId);
 
@@ -1288,10 +1289,10 @@ router.get('/bookmarks-personal/:userId', async (req, res) => {
             where: { userId },
             attributes: ['postId'],
         });
-        //console.log('\n\n/bookmarks/:userId: BOOKMARKS', bookmarks); // Log bookmarks, not posts
+        //logger.log('\n\n/bookmarks/:userId: BOOKMARKS', bookmarks); // Log bookmarks, not posts
 
         const postIds = bookmarks.map((b) => b.postId);
-        //console.log('\n\n/bookmarks/:userId: POSTID', postIds); // Log postIds, not posts
+        //logger.log('\n\n/bookmarks/:userId: POSTID', postIds); // Log postIds, not posts
 
         const posts = await db.posts.findAll({
             where: { id: postIds },
@@ -1308,7 +1309,7 @@ router.get('/bookmarks-personal/:userId', async (req, res) => {
             order: [['createdAt', 'DESC']],
         });
 
-        //console.log('\n\n/bookmarks/:userId: POSTS', posts);
+        //logger.log('\n\n/bookmarks/:userId: POSTS', posts);
         res.status(200).json({ posts, total: posts.length });
     } catch (err) {
         logger.error('/bookmarks/:userId error:', err);
