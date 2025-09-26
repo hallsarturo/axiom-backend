@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 const router = Router();
 
-app.post('/api/logout', function (req, res) {
+router.post('/api/logout', function (req, res) {
     res.clearCookie('token', {
         httpOnly: true,
         secure: true,
