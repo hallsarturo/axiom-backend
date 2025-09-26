@@ -15,6 +15,7 @@ import cors from 'cors';
 import passport from 'passport';
 import cookieParser from 'cookie-parser';
 import { router as healthRouter } from './api/health/health.js';
+import { router as logoutRouter } from './api/auth/logout.js';
 import { router as loginRouter } from './api/auth/login.js';
 import { router as signupRouter } from './api/auth/signup.js';
 import { router as authRouter } from './api/auth/auth.js';
@@ -131,20 +132,6 @@ app.use(
 // cookie Parser
 app.use(cookieParser());
 
-// Express-session
-// app.use(
-//     session({
-//         secret: process.env.SESSION_SECRET,
-//         resave: false,
-//         saveUninitialized: true,
-//         cookie: {
-//             secure: true,
-//             maxAge: 15 * 60 * 1000,
-//             sameSite: 'none',
-//             httpOnly: true,
-//         },
-//     })
-// );
 
 app.use(passport.initialize());
 // Serialize user to session (store user id)
@@ -220,6 +207,7 @@ app.get('/api/verify-auth', (req, res) => {
 });
 
 app.use('/api/health', healthRouter);
+app.use('/api/logout', logoutRouter);
 app.use('/api/login', loginRouter);
 app.use('/api/signup', signupRouter);
 app.use('/api/auth', authRouter);
@@ -242,27 +230,7 @@ app.use('/api/posts', postsRouter);
 app.use('/api/comments', commentsRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/chat', chatRouter);
-app.post('/api/logout', function (req, res, next) {
-    req.logout(function (err) {
-        if (err) {
-            return next(err);
-        }
-        res.clearCookie('token', {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-        });
-        req.session.destroy((err) => {
-            if (err) {
-                return res
-                    .status(500)
-                    .json({ message: 'Error destroying session' });
-            }
-            res.clearCookie('connect.sid');
-            res.status(200).json({ message: 'Logout successful' });
-        });
-    });
-});
+
 //
 
 // Load SSL Certificates
