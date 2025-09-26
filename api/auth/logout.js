@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 const router = Router();
 
-router.post('/api/logout', function (req, res) {
+router.post('/', function (req, res) {
     // Clear the cookie with EXACTLY the same parameters as when it was set
     res.clearCookie('token', {
         httpOnly: true,
