@@ -7,4 +7,12 @@ export default {
         port: 5432,
         dialect: 'postgres',
     },
+    development: {
+        username: 'postgres',
+        password: 'ZtBvawHDapBkorb',
+        database: 'philo-net-db',
+        host: 'localhost',
+        port: 5432,
+        dialect: 'postgres',
+    },
 };

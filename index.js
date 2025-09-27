@@ -37,7 +37,12 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
 import initWebsocket from './lib/websocket-server.js';
 
-dotenv.config();
+if (process.env.NODE_ENV === 'production') {
+    dotenv.config({ path: '.env' });
+} else {
+    dotenv.config({ path: '.env_local' });
+}
+
 const app = express();
 
 // logger.error('Test error log: Winston is Working!')
