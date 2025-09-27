@@ -462,7 +462,7 @@ router.get('/userposts', async (req, res) => {
                 return {
                     postId,
                     ...postData,
-                    userId: authorId, 
+                    userId: authorId,
                     imgSrc: image ? image : null,
                     authorProfilePic: profilePic,
                     totalReactions,
@@ -1203,6 +1203,13 @@ router.delete('/:postId', authenticate, async (req, res) => {
         userId = req.userId;
     }
     logger.info('\n\nuser id: ', userId, 'post id: ', postId, '\n\n');
+    logger.info(
+        '\n\nuser id: ' +
+            JSON.stringify(userId) +
+            ' post id: ' +
+            JSON.stringify(postId) +
+            '\n\n'
+    );
     try {
         const post = await db.posts.findByPk(postId);
 
