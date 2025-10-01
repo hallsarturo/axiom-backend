@@ -1,4 +1,11 @@
 import '../../lib/env-config.js';
+import {
+    frontendUrl,
+    jwtSecret,
+    sessionCookieDomain,
+    jwtIssuer,
+    jwtAudience,
+} from '../../lib/env-config.js';
 import { Router } from 'express';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
@@ -16,9 +23,10 @@ const router = Router();
 // JWT
 let opts = {};
 opts.jwtFromRequest = (req) => req?.cookies?.token || null; // Extract token from cookie
-opts.secretOrKey = process.env.JWT_SECRET;
-opts.issuer = 'api.axiomlab.space';
-opts.audience = 'axiomlab.space';
+opts.secretOrKey = jwtSecret;
+opts.issuer = jwtIssuer;
+opts.audience = jwtAudience;
+
 
 passport.use(
     new JwtStrategy(

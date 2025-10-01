@@ -1,4 +1,11 @@
 import './lib/env-config.js';
+import {
+    frontendUrl,
+    jwtSecret,
+    sessionCookieDomain,
+    jwtIssuer,
+    jwtAudience,
+} from './lib/env-config.js';
 import './instrument.js';
 import * as Sentry from '@sentry/node';
 import dotenv from 'dotenv';
@@ -124,7 +131,7 @@ app.use(requireHTTPS);
 // CORS
 app.use(
     cors({
-        origin: process.env.FRONTEND_URL,
+        origin: frontendUrl,
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         allowedHeaders: ['Content-Type', 'Authorization'],
@@ -143,7 +150,7 @@ app.use(
             secure: true,
             sameSite: 'none',
             maxAge: 24 * 60 * 60 * 1000, // 1 day
-            domain: '.axiomlab.space',
+            domain: sessionCookieDomain,
         },
     })
 );
@@ -168,9 +175,9 @@ app.use(passport.session());
 // PASSPORT-JWT
 let opts = {};
 opts.jwtFromRequest = (req) => req?.cookies?.token || null; // Extract token from cookie
-opts.secretOrKey = process.env.JWT_SECRET;
-opts.issuer = 'api.axiomlab.space';
-opts.audience = 'axiomlab.space';
+opts.secretOrKey = jwtSecret;
+opts.issuer = jwtIssuer;
+opts.audience = jwtAudience;
 
 // helmet
 app.use(helmet());
