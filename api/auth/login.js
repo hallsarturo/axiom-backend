@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
+import { jwtSecret, sessionCookieDomain } from '../../lib/env-config.js';
 import bcrypt from 'bcrypt';
 import db from '../../models/index.js';
 import logger from '../../lib/winston.js';
@@ -91,29 +92,37 @@ router.post('/', async (req, res) => {
                         id: user.id,
                         username: user.username,
                     },
-                    process.env.JWT_SECRET,
+                    jwtSecret,
                     { expiresIn: '30d' }
                 );
-                logger.info('info', 'token generated: ', token);
-                res.cookie('token', token, {
-                    httpOnly: true,
-                    secure: true,
-                    sameSite: 'none',
-                    domain: '.axiomlab.space',
-                    path: '/',
-                    maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-                })
-                    .status(200)
-                    .json({
-                        user: {
-                            id: user.id,
-                            username: user.username,
-                            email: user.email,
-                            mobilePhone: user.mobilePhone,
-                            isVerified: user.isVerified,
-                        },
-                        message: 'Login successful',
+
+                if (token) {
+                    logger.info('info', 'token generated: ');
+                    res.cookie('token', token, {
+                        httpOnly: true,
+                        secure: true,
+                        sameSite: 'none',
+                        domain: sessionCookieDomain,
+                        path: '/',
+                        maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+                    })
+                        .status(200)
+                        .json({
+                            user: {
+                                id: user.id,
+                                username: user.username,
+                                email: user.email,
+                                mobilePhone: user.mobilePhone,
+                                isVerified: user.isVerified,
+                            },
+                            message: 'Login successful',
+                        });
+                } else {
+                    logger.error('error', 'no token generated while login in');
+                    res.status(500).json({
+                        message: 'Token generation failed',
                     });
+                }
             } else {
                 return res.status(401).json({
                     message:
