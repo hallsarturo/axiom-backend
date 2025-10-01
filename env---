@@ -1,13 +1,15 @@
-NODE_ENV=development
-FRONTEND_URL=https://localhost:3000
-BACKEND_URL=https://localhost:4010
+NODE_ENV=production
+PORT=4010
+FRONTEND_URL=https://social.axiomlab.space
+BACKEND_URL=https://api.axiomlab.space
+DOMAIN=.axiomlab.space
 
 # POSTGRES CONF
 # DB_NAME=axiom_production
 DB_HOST=localhost
-DB_NAME=philo-net-db
+DB_NAME=axiom_production
 DB_USER=postgres
-DB_PASS=ZtBvawHDapBkorb
+DB_PASS=RxrDywYKfqrBDnh
 
 # TWILIO 
 TWILIO_ACCOUNT_SID=AC57d2be896647c3edfe35d28b23ddc945
@@ -29,10 +31,3 @@ JWT_SECRET=168e847606df787f94347aa7f0ef6bd6e942cfc9f5c6711f134ff6f53824436379f0e
 
 # SENTRY
 SENTRY_DSN=https://de51ed3108ab59ccd37afb799b92cb47@o4508280512249856.ingest.us.sentry.io/4510032119988224
-
-# ELASTIC SEARCH
-ELASTIC_SEARCH_PASSWORD=ioBPJe46
-ELASTIC_SEARCH_USER=elastic
-ELASTIC_SEARCH_URL=http://localhost:5601
-ELASTICSEARCH_API_endpoint=http://localhost:9200
-API_key=SmJWX1U1Z0I1TWdSTXNOWk9URnQ6NmpFWEdfSFBtd1I0Tnl4UVRreElmdw==

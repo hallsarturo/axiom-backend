@@ -1,3 +1,4 @@
+import '../../lib/env-config.js';
 import { Router } from 'express';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';

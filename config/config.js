@@ -10,7 +10,7 @@ export default {
     development: {
         username: 'postgres',
         password: 'ZtBvawHDapBkorb',
-        database: 'philo-net-db',
+        database: 'axiom_development',
         host: 'localhost',
         port: 5432,
         dialect: 'postgres',

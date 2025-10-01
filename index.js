@@ -1,3 +1,4 @@
+import './lib/env-config.js';
 import './instrument.js';
 import * as Sentry from '@sentry/node';
 import dotenv from 'dotenv';
@@ -36,12 +37,6 @@ import config from './config/config.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
 import initWebsocket from './lib/websocket-server.js';
-
-if (process.env.NODE_ENV === 'production') {
-    dotenv.config({ path: '.env' });
-} else {
-    dotenv.config({ path: '.env_local' });
-}
 
 const app = express();
 
