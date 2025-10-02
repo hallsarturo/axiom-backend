@@ -76,6 +76,7 @@ const _log_dirname =
     '/Users/proal-mac/Code/AxiomLabs/Axiom/back/axiom-backend/';
 
 console.log('reached point 1');
+console.log('NODE_ENV:', process.env.NODE_ENV);
 // Test db connection
 const env = process.env.NODE_ENV || 'development';
 const dbConfig = config[env];
