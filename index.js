@@ -123,14 +123,23 @@ app.use(express.json());
 //
 // Block non secure requests
 function requireHTTPS(req, res, next) {
-    if (req.secure) {
+    // Allow requests from localhost and those forwarded as HTTPS by Nginx
+    const isLocal =
+        req.ip === '127.0.0.1' ||
+        req.ip === '::1' ||
+        req.hostname === 'localhost';
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+
+    if (isLocal || isSecure) {
         return next();
     }
     res.status(403).send('HTTPS Required');
 }
 console.log('reached point 3');
 app.set('trust proxy', 1);
-app.use(requireHTTPS);
+
+// app.use(requireHTTPS);
+
 // CORS
 app.use(
     cors({
