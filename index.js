@@ -13,6 +13,7 @@ import express from 'express';
 import morgan from 'morgan';
 import logger from './lib/winston.js';
 import session from 'express-session';
+import pgSession from 'connect-pg-simple';
 import * as rfs from 'rotating-file-stream';
 import fs from 'node:fs';
 import path from 'path';
@@ -156,9 +157,19 @@ app.use(cookieParser());
 // Express-session
 app.use(
     session({
+        store: new (pgSession(session))({
+            conObject: {
+                host: dbConfig.host,
+                port: dbConfig.port,
+                user: dbConfig.username,
+                password: dbConfig.password,
+                database: dbConfig.database,
+            },
+            tableName: 'session', // default table name
+        }),
         secret: process.env.SESSION_SECRET,
         resave: false,
-        saveUninitialized: true,
+        saveUninitialized: false,
         cookie: {
             secure: true,
             sameSite: 'none',
