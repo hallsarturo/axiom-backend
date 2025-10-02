@@ -75,6 +75,7 @@ const securePort = 4010;
 const _log_dirname =
     '/Users/proal-mac/Code/AxiomLabs/Axiom/back/axiom-backend/';
 
+console.log('reached point 1');
 // Test db connection
 const env = process.env.NODE_ENV || 'development';
 const dbConfig = config[env];
@@ -101,6 +102,7 @@ if (dbConfig.use_env_variable) {
     }
 })();
 
+console.log('reached point 2');
 // MIDDLEWARE
 // Logging:
 const accessLogStream = rfs.createStream('access.log', {
@@ -126,6 +128,7 @@ function requireHTTPS(req, res, next) {
     }
     res.status(403).send('HTTPS Required');
 }
+console.log('reached point 3');
 app.set('trust proxy', 1);
 app.use(requireHTTPS);
 // CORS
