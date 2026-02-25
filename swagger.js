@@ -9,8 +9,12 @@ const swaggerDefinition = {
   },
   servers: [
     {
-      url: 'https://localhost:4010',
-      description: 'Development server',
+      url: process.env.NODE_ENV === 'production' 
+        ? 'https://api.axiomlab.space' 
+        : 'https://localhost:4010',
+      description: process.env.NODE_ENV === 'production' 
+        ? 'Production server' 
+        : 'Development server',
     },
   ],
 };
