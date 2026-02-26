@@ -1,3 +1,12 @@
+import dotenv from 'dotenv';
+
+// Load environment variables BEFORE any other imports that use them
+if (process.env.NODE_ENV === 'production') {
+    dotenv.config({ path: '.env.production' });
+} else {
+    dotenv.config({ path: '.env.development' });
+}
+
 import './lib/env-config.js';
 import {
     frontendUrl,
@@ -8,7 +17,6 @@ import {
 } from './lib/env-config.js';
 import './instrument.js';
 import * as Sentry from '@sentry/node';
-import dotenv from 'dotenv';
 import express from 'express';
 import morgan from 'morgan';
 import logger from './lib/winston.js';
@@ -122,7 +130,7 @@ app.use(
 
 // JSON Parse
 app.use(express.json());
-//
+
 // Block non secure requests
 function requireHTTPS(req, res, next) {
     // Allow requests from localhost and those forwarded as HTTPS by Nginx
