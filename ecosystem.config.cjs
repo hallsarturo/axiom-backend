@@ -5,8 +5,8 @@ module.exports = {
             script: 'index.js',
             watch: false,
             interpreter: 'node',
-            env_production: {
-                NODE_ENV: 'production',
+            env: {
+                NODE_ENV: 'production',  // Always set, even on auto-restart
             },
         },
     ],
