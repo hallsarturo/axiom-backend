@@ -314,11 +314,18 @@ const options =
 
 // Create HTTP/ server
 const httpServer = http.createServer(app);
-const httpsServer = https.createServer(options, app);
-httpServer.on('error', (err) => console.error(err));
+let httpsServer;
 
-// Initialize Websocket with the HTTPS server
-const wsService = initWebsocket(httpsServer);
+if (process.env.NODE_ENV !== 'production') {
+    const options = {
+        key: fs.readFileSync('./certificates/localhost-key.pem'),
+        cert: fs.readFileSync('./certificates/localhost.pem'),
+        allowHTTP1: true,
+    };
+    httpsServer = https.createServer(options, app);
+}
+
+const wsService = initWebsocket(httpsServer || httpServer);
 logger.info('WebSocket service initialized:', !!wsService);
 
 httpServer.listen(port, '0.0.0.0', () => {
@@ -328,6 +335,8 @@ httpServer.listen(port, '0.0.0.0', () => {
 // Export the WebSocket service for use in other parts of the application
 export { wsService };
 
-httpsServer.listen(securePort, '0.0.0.0', () => {
-    console.log(`Server ready HTTPS, app listening on port ${securePort}`);
-});
+if (httpsServer) {
+    httpsServer.listen(securePort, '0.0.0.0', () => {
+        console.log(`Server ready HTTPS, app listening on port ${securePort}`);
+    });
+}
