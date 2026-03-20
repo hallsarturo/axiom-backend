@@ -294,22 +294,22 @@ app.use('/api/chat', chatRouter);
 //
 
 // Load SSL Certificates
-const options =
-    process.env.NODE_ENV === 'production'
-        ? {
-              key: fs.readFileSync(
-                  '/etc/letsencrypt/live/api.axiomlab.space/privkey.pem'
-              ),
-              cert: fs.readFileSync(
-                  '/etc/letsencrypt/live/api.axiomlab.space/fullchain.pem'
-              ),
-              allowHTTP1: true,
-          }
-        : {
-              key: fs.readFileSync('./certificates/localhost-key.pem'),
-              cert: fs.readFileSync('./certificates/localhost.pem'),
-              allowHTTP1: true,
-          };
+// const options =
+//     process.env.NODE_ENV === 'production'
+//         ? {
+//               key: fs.readFileSync(
+//                   '/etc/letsencrypt/live/api.axiomlab.space/privkey.pem'
+//               ),
+//               cert: fs.readFileSync(
+//                   '/etc/letsencrypt/live/api.axiomlab.space/fullchain.pem'
+//               ),
+//               allowHTTP1: true,
+//           }
+//         : {
+//               key: fs.readFileSync('./certificates/localhost-key.pem'),
+//               cert: fs.readFileSync('./certificates/localhost.pem'),
+//               allowHTTP1: true,
+//           };
 //
 
 // Create HTTP/ server
