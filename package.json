@@ -47,6 +47,7 @@
     "ws": "^8.18.3"
   },
   "devDependencies": {
+    "nodemon": "^3.1.14",
     "prettier": "3.5.3",
     "sequelize-cli": "^6.6.3"
   }
