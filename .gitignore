@@ -1,6 +1,6 @@
 node_modules
 .env
-.env.local
+.env_local
 npm-debug.log
 data/
 /public/uploads/*

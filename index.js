@@ -1,3 +1,12 @@
+import dotenv from 'dotenv';
+
+// Load environment variables BEFORE any other imports that use them
+if (process.env.NODE_ENV === 'production') {
+    dotenv.config({ path: '.env.production' });
+} else {
+    dotenv.config({ path: '.env.development' });
+}
+
 import './lib/env-config.js';
 import {
     frontendUrl,
@@ -8,11 +17,11 @@ import {
 } from './lib/env-config.js';
 import './instrument.js';
 import * as Sentry from '@sentry/node';
-import dotenv from 'dotenv';
 import express from 'express';
 import morgan from 'morgan';
 import logger from './lib/winston.js';
 import session from 'express-session';
+import pgSession from 'connect-pg-simple';
 import * as rfs from 'rotating-file-stream';
 import fs from 'node:fs';
 import path from 'path';
@@ -75,6 +84,8 @@ const securePort = 4010;
 const _log_dirname =
     '/Users/proal-mac/Code/AxiomLabs/Axiom/back/axiom-backend/';
 
+console.log('reached point 1');
+console.log('NODE_ENV:', process.env.NODE_ENV);
 // Test db connection
 const env = process.env.NODE_ENV || 'development';
 const dbConfig = config[env];
@@ -101,6 +112,7 @@ if (dbConfig.use_env_variable) {
     }
 })();
 
+console.log('reached point 2');
 // MIDDLEWARE
 // Logging:
 const accessLogStream = rfs.createStream('access.log', {
@@ -118,16 +130,26 @@ app.use(
 
 // JSON Parse
 app.use(express.json());
-//
+
 // Block non secure requests
 function requireHTTPS(req, res, next) {
-    if (req.secure) {
+    // Allow requests from localhost and those forwarded as HTTPS by Nginx
+    const isLocal =
+        req.ip === '127.0.0.1' ||
+        req.ip === '::1' ||
+        req.hostname === 'localhost';
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+
+    if (isLocal || isSecure) {
         return next();
     }
     res.status(403).send('HTTPS Required');
 }
+console.log('reached point 3');
 app.set('trust proxy', 1);
-app.use(requireHTTPS);
+
+// app.use(requireHTTPS);
+
 // CORS
 app.use(
     cors({
@@ -143,9 +165,19 @@ app.use(cookieParser());
 // Express-session
 app.use(
     session({
+        store: new (pgSession(session))({
+            conObject: {
+                host: dbConfig.host,
+                port: dbConfig.port,
+                user: dbConfig.username,
+                password: dbConfig.password,
+                database: dbConfig.database,
+            },
+            tableName: 'session', // default table name
+        }),
         secret: process.env.SESSION_SECRET,
         resave: false,
-        saveUninitialized: true,
+        saveUninitialized: false,
         cookie: {
             secure: true,
             sameSite: 'none',
@@ -262,31 +294,38 @@ app.use('/api/chat', chatRouter);
 //
 
 // Load SSL Certificates
-const options =
-    process.env.NODE_ENV === 'production'
-        ? {
-              key: fs.readFileSync(
-                  '/etc/letsencrypt/live/api.axiomlab.space/privkey.pem'
-              ),
-              cert: fs.readFileSync(
-                  '/etc/letsencrypt/live/api.axiomlab.space/fullchain.pem'
-              ),
-              allowHTTP1: true,
-          }
-        : {
-              key: fs.readFileSync('./certificates/localhost-key.pem'),
-              cert: fs.readFileSync('./certificates/localhost.pem'),
-              allowHTTP1: true,
-          };
+// const options =
+//     process.env.NODE_ENV === 'production'
+//         ? {
+//               key: fs.readFileSync(
+//                   '/etc/letsencrypt/live/api.axiomlab.space/privkey.pem'
+//               ),
+//               cert: fs.readFileSync(
+//                   '/etc/letsencrypt/live/api.axiomlab.space/fullchain.pem'
+//               ),
+//               allowHTTP1: true,
+//           }
+//         : {
+//               key: fs.readFileSync('./certificates/localhost-key.pem'),
+//               cert: fs.readFileSync('./certificates/localhost.pem'),
+//               allowHTTP1: true,
+//           };
 //
 
 // Create HTTP/ server
 const httpServer = http.createServer(app);
-const httpsServer = https.createServer(options, app);
-httpServer.on('error', (err) => console.error(err));
+let httpsServer;
 
-// Initialize Websocket with the HTTPS server
-const wsService = initWebsocket(httpsServer);
+if (process.env.NODE_ENV !== 'production') {
+    const options = {
+        key: fs.readFileSync('./certificates/localhost-key.pem'),
+        cert: fs.readFileSync('./certificates/localhost.pem'),
+        allowHTTP1: true,
+    };
+    httpsServer = https.createServer(options, app);
+}
+
+const wsService = initWebsocket(httpsServer || httpServer);
 logger.info('WebSocket service initialized:', !!wsService);
 
 httpServer.listen(port, '0.0.0.0', () => {
@@ -296,6 +335,8 @@ httpServer.listen(port, '0.0.0.0', () => {
 // Export the WebSocket service for use in other parts of the application
 export { wsService };
 
-httpsServer.listen(securePort, '0.0.0.0', () => {
-    console.log(`Server ready HTTPS, app listening on port ${securePort}`);
-});
+if (httpsServer) {
+    httpsServer.listen(securePort, '0.0.0.0', () => {
+        console.log(`Server ready HTTPS, app listening on port ${securePort}`);
+    });
+}
