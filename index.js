@@ -54,7 +54,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
 import initWebsocket from './lib/websocket-server.js';
 
-const app = express();
+export const app = express();
 
 // logger.error('Test error log: Winston is Working!')
 
@@ -291,6 +291,7 @@ app.use('/api/comments', commentsRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/chat', chatRouter);
 
+
 //
 
 // Load SSL Certificates
@@ -334,6 +335,7 @@ httpServer.listen(port, '0.0.0.0', () => {
 
 // Export the WebSocket service for use in other parts of the application
 export { wsService };
+
 
 if (httpsServer) {
     httpsServer.listen(securePort, '0.0.0.0', () => {

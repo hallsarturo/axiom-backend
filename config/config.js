@@ -15,4 +15,12 @@ export default {
         port: 5432,
         dialect: 'postgres',
     },
+    test: {
+        username: 'postgres',
+        password: 'ZtBvawHDapBkorb',
+        database: 'axiom_test',
+        host: 'localhost',
+        port: 5432,
+        dialect: 'postgres',
+    },
 };
